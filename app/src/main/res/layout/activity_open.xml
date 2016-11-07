@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="edu.uco.map2016.mediaplayer.OpenActivity">
+
+    <TextView android:id="@+id/actOpen_txtType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/actOpen_txtType"/>
+    <RadioGroup android:id="@+id/actOpen_rdgType"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/actOpen_txtType">
+
+        <RadioButton android:id="@+id/actOpen_rdgType_audio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/actOpen_rdgType_audio"/>
+        <RadioButton android:id="@+id/actOpen_rdgType_video"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/actOpen_rdgType_video"/>
+        <RadioButton android:id="@+id/actOpen_rdgType_both"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/actOpen_rdgType_both"
+            android:enabled="false"/>
+    </RadioGroup>
+
+    <Button android:id="@+id/actOpen_btnBrowse"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/actOpen_rdgType"
+        android:text="@string/actOpen_btnBrowse"/>
+    <EditText android:id="@+id/actOpen_edtUrl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textUri"
+        android:layout_below="@id/actOpen_btnBrowse"/>
+    <Button android:id="@+id/actOpen_btnOpen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/actOpen_edtUrl"
+        android:text="@string/actOpen_btnOpen"/>
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="53dp"
+        android:text="Custom Notification Tutorial" />
+
+    <Button
+        android:id="@+id/button1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:onClick="startService"
+        android:text="Show Notification" />
+
+</RelativeLayout>
