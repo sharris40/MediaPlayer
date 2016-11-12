@@ -66,10 +66,21 @@ public class MusicActivity extends Activity {
         });
     }
 
+    public void startService(View v) {
+        Intent serviceIntent = new Intent(MusicActivity.this, NotificationService.class);
+        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+        startService(serviceIntent);
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
+
+       // mediaPlayer.start();
+        Intent serviceIntent = new Intent(MusicActivity.this, NotificationService.class);
+        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+        startService(serviceIntent);
+
 
 
 

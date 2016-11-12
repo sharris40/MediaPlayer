@@ -23,24 +23,7 @@ public class ListViewFragment extends ListFragment {
     public void onListItemClick(ListView l, View v, int pos, long id) {
         //getListView().setItemChecked(pos, true);
         //mListener.onListSelection(pos);
-        if ((ListActivity.mListArrayIndexForSeatchInterface.get(pos) >= 0) && (ListActivity.mListArrayIndexForSeatchInterface.get(pos) < ListActivity.mListArray.size())) {
-            Toast.makeText(getActivity().getApplicationContext(), ListActivity.searchInterface.getListResult().get(ListActivity.mListArrayIndexForSeatchInterface.get(pos)).getFileLocationAddress().toString(), Toast.LENGTH_SHORT).show();
-        }
-        else {
-            switch (ListActivity.mListArrayIndexForSeatchInterface.get(pos)) {
-                case ListActivity.CASE_NOT_A_MENU_OPTION:
-                    //do nothing
-                    break;
-                case ListActivity.CASE_SEE_ALL_MUSIC:
-                    //open SeeAllMusic Activity
-                    break;
-                case ListActivity.CASE_SEE_ALL_VIDEO:
-                    //open SeeAllVideo Activity
-                    break;
-            }
-        }
-
-        //Toast.makeText(getActivity().getApplicationContext(), Integer.toString(ListActivity.mListArray.size()), Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity().getApplicationContext(), ListActivity.searchInterface.getListResult().get(pos).getFileLocationAddress().toString(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -53,9 +36,9 @@ public class ListViewFragment extends ListFragment {
 
         try {
             mListener = (ListSelectionListener) getActivity();
-        }
-        catch (ClassCastException e) {
-            throw new ClassCastException(getActivity().toString() + " must implement OnArticleSelectedListener");
+        } catch (ClassCastException e) {
+            throw new ClassCastException(getActivity().toString()
+                    + " must implement OnArticleSelectedListener");
         }
 
         /*
