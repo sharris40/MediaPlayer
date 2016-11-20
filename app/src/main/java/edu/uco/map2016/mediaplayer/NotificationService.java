@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
+import static edu.uco.map2016.mediaplayer.MusicActivity.*;
+
 public class NotificationService extends Service {
 
     Notification status;
@@ -30,7 +32,9 @@ public class NotificationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
             showNotification();
-            Toast.makeText(this, "Service Started", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Player Started", Toast.LENGTH_SHORT).show();
+
+
 
         } else if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)) {
             Toast.makeText(this, "Clicked Previous", Toast.LENGTH_SHORT).show();
@@ -47,6 +51,7 @@ public class NotificationService extends Service {
             Toast.makeText(this, "Service Stoped", Toast.LENGTH_SHORT).show();
             stopForeground(true);
             stopSelf();
+            mediaPlayer.pause();
         }
         return START_STICKY;
     }
@@ -125,5 +130,6 @@ public class NotificationService extends Service {
         startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, status);
     }
 
-
 }
+
+

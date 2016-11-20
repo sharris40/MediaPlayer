@@ -1,4 +1,4 @@
-package edu.uco.map2016.mediaplayer.services.providers;
+package edu.uco.map2016.mediaplayer.services.providers.spotify;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -15,16 +15,17 @@ import com.spotify.sdk.android.authentication.AuthenticationResponse;
 import java.util.Date;
 
 import edu.uco.map2016.mediaplayer.R;
+import edu.uco.map2016.mediaplayer.services.ProviderService;
 
 public class SpotifyLoginActivity extends Activity {
     private static final String LOG_TAG = "SpotifyLoginActivity";
 
     private static final int REQUEST_CODE = 19348;
     private static final String STATE_STARTED
-            = "edu.uco.map2016.mediaplayer.services.providers.SpotifyLoginActivity.state_started";
+            = "edu.uco.map2016.mediaplayer.services.providers.spotify.SpotifyLoginActivity.state_started";
 
     private static final String EXTRA_CONTAINED_INTENT
-            = "edu.uco.map2016.mediaplayer.services.providers.SpotifyLoginActivity.extra_containedIntent";
+            = "edu.uco.map2016.mediaplayer.services.providers.spotify.SpotifyLoginActivity.extra_containedIntent";
 
     private boolean mRequested = false;
 
@@ -71,8 +72,8 @@ public class SpotifyLoginActivity extends Activity {
             bindService(serviceIntent, new ServiceConnection() {
                 @Override
                 public void onServiceConnected(ComponentName name, IBinder service) {
-                    SpotifyService.SpotifyBinder binder = (SpotifyService.SpotifyBinder) service;
-                    SpotifyService sService = binder.getService();
+                    ProviderService.ProviderBinder binder = (ProviderService.ProviderBinder) service;
+                    SpotifyService sService = (SpotifyService)binder.getService();
                     AuthenticationResponse response = AuthenticationClient.getResponse(resultCode, intent);
                     sService.setAuthenticationData(now, response);
                     Log.d(LOG_TAG, "Unbinding");

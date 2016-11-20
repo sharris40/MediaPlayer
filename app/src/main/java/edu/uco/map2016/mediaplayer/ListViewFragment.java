@@ -2,11 +2,23 @@ package edu.uco.map2016.mediaplayer;
 
 import android.app.ListFragment;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import edu.uco.map2016.mediaplayer.api.MediaFile;
+import edu.uco.map2016.mediaplayer.api.SearchResults;
+
+import static edu.uco.map2016.mediaplayer.ListActivity.CASE_NOT_A_MENU_OPTION;
+import static edu.uco.map2016.mediaplayer.ListActivity.STRING_CAPACITY;
+import static edu.uco.map2016.mediaplayer.ListActivity.mListArray;
+import static edu.uco.map2016.mediaplayer.ListActivity.mListArrayIndexForSeatchInterface;
 
 public class ListViewFragment extends ListFragment {
 
@@ -14,6 +26,10 @@ public class ListViewFragment extends ListFragment {
 
     private static final String TAG = "TitlesFragment";
     private ListSelectionListener mListener = null;
+
+    private ArrayAdapter<String> mAdapter;
+
+    private final LinkedList<SearchResults> mResults = new LinkedList<>();
 
     public interface ListSelectionListener {
         public void onListSelection(int index);
@@ -23,12 +39,12 @@ public class ListViewFragment extends ListFragment {
     public void onListItemClick(ListView l, View v, int pos, long id) {
         //getListView().setItemChecked(pos, true);
         //mListener.onListSelection(pos);
-        if ((ListActivity.mListArrayIndexForSeatchInterface.get(pos) >= 0) && (ListActivity.mListArrayIndexForSeatchInterface.get(pos) < ListActivity.mListArray.size())) {
-            Toast.makeText(getActivity().getApplicationContext(), ListActivity.searchInterface.getListResult().get(ListActivity.mListArrayIndexForSeatchInterface.get(pos)).getFileLocationAddress().toString(), Toast.LENGTH_SHORT).show();
+        if ((mListArrayIndexForSeatchInterface.get(pos) >= 0) && (mListArrayIndexForSeatchInterface.get(pos) < mListArray.size())) {
+            Toast.makeText(getActivity().getApplicationContext(), ListActivity.searchInterface.getListResult().get(mListArrayIndexForSeatchInterface.get(pos)).getFileLocationAddress().toString(), Toast.LENGTH_SHORT).show();
         }
         else {
-            switch (ListActivity.mListArrayIndexForSeatchInterface.get(pos)) {
-                case ListActivity.CASE_NOT_A_MENU_OPTION:
+            switch (mListArrayIndexForSeatchInterface.get(pos)) {
+                case CASE_NOT_A_MENU_OPTION:
                     //do nothing
                     break;
                 case ListActivity.CASE_SEE_ALL_MUSIC:
@@ -47,7 +63,8 @@ public class ListViewFragment extends ListFragment {
     public void onActivityCreated(Bundle savedState) {
         super.onActivityCreated(savedState);
 
-        setListAdapter(new ArrayAdapter<String>(getActivity(),R.layout.fragment_list_view, ListActivity.mListArray));
+        mAdapter = new ArrayAdapter<String>(getActivity(),R.layout.fragment_list_view, mListArray);
+        setListAdapter(mAdapter);
         //getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         getListView().setChoiceMode(ListView.CHOICE_MODE_NONE);
 
@@ -75,6 +92,57 @@ public class ListViewFragment extends ListFragment {
                 startActivity(Intent.createChooser(emailIntent, "Send mail..."));
             }
         });*/
+    }
+
+    public void addResults(SearchResults results) {
+        Log.d(TAG, "addResults start");
+        mResults.push(results);
+
+        mListArray.add("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t" + getResources().getString(R.string.frgListView_source, results.getSource()) + "\n");
+        mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
+
+        List<MediaFile> onlineFiles = results.getResults();
+
+        for (int cntr = 0, cntr2 = 0; (cntr < onlineFiles.size()) && cntr2 < 20; cntr++) {
+            if (onlineFiles.get(cntr).getType() == MediaFile.TYPE_AUDIO) {
+                if (onlineFiles.get(cntr).getName().length() > STRING_CAPACITY) {
+                    if (onlineFiles.get(cntr).getDetails().length() > STRING_CAPACITY) {
+                        mListArray.add(onlineFiles.get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + onlineFiles.get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
+                    }
+                    else {
+                        mListArray.add(onlineFiles.get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + onlineFiles.get(cntr).getDetails());
+                    }
+                }
+                else {
+                    if (onlineFiles.get(cntr).getDetails().length() > STRING_CAPACITY) {
+                        mListArray.add(onlineFiles.get(cntr).getName() + "\n" + onlineFiles.get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
+                    }
+                    else {
+                        mListArray.add(onlineFiles.get(cntr).getName() + "\n" + onlineFiles.get(cntr).getDetails());
+                    }
+                }
+                mListArrayIndexForSeatchInterface.add(cntr);
+                cntr2++;
+            }
+        }
+
+        //mListArray.add("See All Video");
+        //mListArrayIndexForSeatchInterface.add(CASE_SEE_ALL_VIDEO);
+
+        mListArray.add("\n");
+        mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
+
+        mAdapter.notifyDataSetChanged();
+
+        Log.d(TAG, "addResults finish");
+    }
+
+    public List<SearchResults> getResults() {
+        return mResults;
+    }
+
+    public void finishSearch() {
+        // TODO: Add logic
     }
 }
 /*

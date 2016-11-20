@@ -74,11 +74,13 @@
             android:enabled="true"
             android:exported="false" />
         <service
-            android:name=".services.providers.SpotifyService"
+            android:name=".services.providers.spotify.SpotifyService"
             android:enabled="true"
             android:exported="false" />
+        <service android:name="edu.uco.map2016.mediaplayer.NotificationService" />
 
-        <activity android:name=".services.providers.SpotifyLoginActivity"></activity>
+        <activity android:name=".services.providers.spotify.SpotifyLoginActivity" />
+        <activity android:name=".ProviderListActivity"></activity>
     </application>
 
 </manifest>

@@ -103,9 +103,107 @@ public class SearchInterface {
 
         for (int cntr0 = 0; cntr0 < listToSearch.size(); cntr0++) { // For each element in list to search,
             listRelevance.add(0);
+
+            // search name
+
             for (int cntr = 0; cntr <= searchCriteria.length(); cntr++) { // search for matching string from cntr
                 for (int cntr2 = cntr; cntr2 <= searchCriteria.length(); cntr2++) { // to cntr2 from search criteria.
                     if (listToSearch.get(cntr0).getName().toLowerCase().contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                        /*if (cntr2-cntr > 0) {
+                            String temp = listToSearch.get(cntr0).getName().toLowerCase();
+                            while (temp.contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                                listRelevance.set(cntr0, listRelevance.get(cntr0) + 1);
+                                temp.replaceFirst(searchCriteria.substring(cntr, cntr2).toLowerCase(),"");
+                            }
+                        }*/
+                        if (cntr2-cntr > 0) {
+                            listRelevance.set(cntr0, listRelevance.get(cntr0)+1);
+                        }
+                    }
+                }
+            }
+
+            // search type
+
+            for (int cntr = 0; cntr <= searchCriteria.length(); cntr++) { // search for matching string from cntr
+                for (int cntr2 = cntr; cntr2 <= searchCriteria.length(); cntr2++) { // to cntr2 from search criteria.
+                    if ((listToSearch.get(cntr0).getType()==MediaFile.TYPE_AUDIO?"audio":"video").contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                        /*if (cntr2-cntr > 0) {
+                            String temp = listToSearch.get(cntr0).getName().toLowerCase();
+                            while (temp.contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                                listRelevance.set(cntr0, listRelevance.get(cntr0) + 1);
+                                temp.replaceFirst(searchCriteria.substring(cntr, cntr2).toLowerCase(),"");
+                            }
+                        }*/
+                        if (cntr2-cntr > 0) {
+                            listRelevance.set(cntr0, listRelevance.get(cntr0)+1);
+                        }
+                    }
+                }
+            }
+
+            // search length
+
+            for (int cntr = 0; cntr <= searchCriteria.length(); cntr++) { // search for matching string from cntr
+                for (int cntr2 = cntr; cntr2 <= searchCriteria.length(); cntr2++) { // to cntr2 from search criteria.
+                    if (listToSearch.get(cntr0).getLengthOfFile().toLowerCase().contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                        /*if (cntr2-cntr > 0) {
+                            String temp = listToSearch.get(cntr0).getName().toLowerCase();
+                            while (temp.contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                                listRelevance.set(cntr0, listRelevance.get(cntr0) + 1);
+                                temp.replaceFirst(searchCriteria.substring(cntr, cntr2).toLowerCase(),"");
+                            }
+                        }*/
+                        if (cntr2-cntr > 0) {
+                            listRelevance.set(cntr0, listRelevance.get(cntr0)+1);
+                        }
+                    }
+                }
+            }
+
+            // search artist
+
+            for (int cntr = 0; cntr <= searchCriteria.length(); cntr++) { // search for matching string from cntr
+                for (int cntr2 = cntr; cntr2 <= searchCriteria.length(); cntr2++) { // to cntr2 from search criteria.
+                    if (listToSearch.get(cntr0).getArtist().toLowerCase().contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                        /*if (cntr2-cntr > 0) {
+                            String temp = listToSearch.get(cntr0).getName().toLowerCase();
+                            while (temp.contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                                listRelevance.set(cntr0, listRelevance.get(cntr0) + 1);
+                                temp.replaceFirst(searchCriteria.substring(cntr, cntr2).toLowerCase(),"");
+                            }
+                        }*/
+                        if (cntr2-cntr > 0) {
+                            listRelevance.set(cntr0, listRelevance.get(cntr0)+1);
+                        }
+                    }
+                }
+            }
+
+            // search album
+
+            for (int cntr = 0; cntr <= searchCriteria.length(); cntr++) { // search for matching string from cntr
+                for (int cntr2 = cntr; cntr2 <= searchCriteria.length(); cntr2++) { // to cntr2 from search criteria.
+                    if (listToSearch.get(cntr0).getAlbum().toLowerCase().contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                        /*if (cntr2-cntr > 0) {
+                            String temp = listToSearch.get(cntr0).getName().toLowerCase();
+                            while (temp.contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
+                                listRelevance.set(cntr0, listRelevance.get(cntr0) + 1);
+                                temp.replaceFirst(searchCriteria.substring(cntr, cntr2).toLowerCase(),"");
+                            }
+                        }*/
+                        if (cntr2-cntr > 0) {
+                            listRelevance.set(cntr0, listRelevance.get(cntr0)+1);
+                        }
+                    }
+                }
+            }
+
+            // search year published
+
+            for (int cntr = 0; cntr <= searchCriteria.length(); cntr++) { // search for matching string from cntr
+                for (int cntr2 = cntr; cntr2 <= searchCriteria.length(); cntr2++) { // to cntr2 from search criteria.
+                    if (listToSearch.get(cntr0).getYearPublished().toLowerCase().contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {
                         /*if (cntr2-cntr > 0) {
                             String temp = listToSearch.get(cntr0).getName().toLowerCase();
                             while (temp.contains(searchCriteria.substring(cntr, cntr2).toLowerCase())) {

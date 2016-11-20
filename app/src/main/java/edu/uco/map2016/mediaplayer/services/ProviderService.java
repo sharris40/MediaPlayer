@@ -3,14 +3,15 @@ package edu.uco.map2016.mediaplayer.services;
 import android.app.Activity;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 
-import edu.uco.map2016.mediaplayer.api.MediaFile;
 import edu.uco.map2016.mediaplayer.api.SearchQuery;
+import edu.uco.map2016.mediaplayer.api.SearchResults;
 
 public abstract class ProviderService extends Service {
     public static final int REQUEST_CONNECT = 1;
@@ -29,6 +30,12 @@ public abstract class ProviderService extends Service {
         void onAsynchronousOperationProgress(int requestType, int requestCode, int responseCode, float progress);
         void onAsynchronousOperationComplete(int requestType, int requestCode, int responseCode);
         void onMessage(int messageCode, int responseCode);
+    }
+
+    public class ProviderBinder extends Binder {
+        public ProviderService getService() {
+            return ProviderService.this;
+        }
     }
 
     private LinkedList<ProviderListener> mListeners = new LinkedList<>();
@@ -67,7 +74,10 @@ public abstract class ProviderService extends Service {
         }
     }
 
+    public abstract @NonNull String getProviderName();
+
     public abstract boolean isConnected();
+    public abstract boolean isConnectionInteractive();
     public abstract Intent createConnectionActivity(Activity context);
     public abstract boolean hasConnectionParameters();
     public abstract boolean setConnectionParameters(Bundle params);
@@ -76,5 +86,5 @@ public abstract class ProviderService extends Service {
     public abstract void checkConnection(int requestCode);
 
     public abstract void search(int requestCode, SearchQuery query);
-    public abstract List<MediaFile> getSearchResults(int requestCode, int page);
+    public abstract SearchResults getSearchResults(int requestCode);
 }

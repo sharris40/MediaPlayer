@@ -19,6 +19,8 @@ import java.net.URISyntaxException;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
 
 public class OpenActivity extends Activity {
+    Button button1;
+
     private static final String LOG_TAG = "TermProject";
     private static final int REQUEST_BROWSE_LEGACY_AUDIO = 1;
     private static final int REQUEST_BROWSE_LEGACY_VIDEO = 2;
@@ -54,13 +56,16 @@ public class OpenActivity extends Activity {
         }
     }
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.activity_open);
-        rdoAudio = (RadioButton)findViewById(R.id.actOpen_rdgType_audio);
-        rdoVideo = (RadioButton)findViewById(R.id.actOpen_rdgType_video);
-        rdoBoth = (RadioButton)findViewById(R.id.actOpen_rdgType_both);
+        // button1 = (Button) findViewById(R.id.button1);
+        rdoAudio = (RadioButton) findViewById(R.id.actOpen_rdgType_audio);
+        rdoVideo = (RadioButton) findViewById(R.id.actOpen_rdgType_video);
+        rdoBoth = (RadioButton) findViewById(R.id.actOpen_rdgType_both);
 
         // ACTION_OPEN_DOCUMENT is not available before 19.
         // The old API doesn't let us find both types at once, so set audio by default.
@@ -70,7 +75,7 @@ public class OpenActivity extends Activity {
             rdoBoth.setEnabled(true);
             rdoBoth.setChecked(true);
         }
-        Button btnBrowse = (Button)findViewById(R.id.actOpen_btnBrowse);
+        Button btnBrowse = (Button) findViewById(R.id.actOpen_btnBrowse);
         btnBrowse.setOnClickListener(v -> {
             if (Build.VERSION.SDK_INT < 19) {
                 try {
@@ -102,8 +107,8 @@ public class OpenActivity extends Activity {
                 }
             }
         });
-        edtUrl = (EditText)findViewById(R.id.actOpen_edtUrl);
-        Button btnOpen = (Button)findViewById(R.id.actOpen_btnOpen);
+        edtUrl = (EditText) findViewById(R.id.actOpen_edtUrl);
+        Button btnOpen = (Button) findViewById(R.id.actOpen_btnOpen);
         btnOpen.setOnClickListener(v -> {
             String uriText = edtUrl.getText().toString();
             if (!uriText.isEmpty()) {
@@ -111,9 +116,9 @@ public class OpenActivity extends Activity {
                     URI test = new URI(uriText);
                 } catch (URISyntaxException ue) {
                     Toast.makeText(OpenActivity.this,
-                                   R.string.actOpen_err_invalidUri,
-                                   Toast.LENGTH_LONG)
-                         .show();
+                            R.string.actOpen_err_invalidUri,
+                            Toast.LENGTH_LONG)
+                            .show();
                     return;
                 }
                 MediaFile media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_NONE);
@@ -121,15 +126,17 @@ public class OpenActivity extends Activity {
                 startActivity(playerIntent);
             }
         });
-        restoreInstanceState(savedInstanceState);
+
+
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         Intent playerIntent;
         if (intent != null && resultCode == RESULT_OK) {
             MediaFile media = null;
-            switch(requestCode) {
+            switch (requestCode) {
                 case REQUEST_BROWSE:
                     media = new MediaFile("Media File", intent.getData(), MediaFile.TYPE_NONE);
                     playerIntent = VideoActivity.getInstance(this, media);
@@ -163,7 +170,6 @@ public class OpenActivity extends Activity {
         state.putString(STATE_PATH, edtUrl.getText().toString());
         super.onSaveInstanceState(state);
     }
-
 
 
 }

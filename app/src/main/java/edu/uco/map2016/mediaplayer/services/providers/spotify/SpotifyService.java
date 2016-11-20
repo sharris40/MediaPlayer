@@ -1,4 +1,4 @@
-package edu.uco.map2016.mediaplayer.services.providers;
+package edu.uco.map2016.mediaplayer.services.providers.spotify;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.util.Log;
+import android.util.SparseArray;
 
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
@@ -24,8 +25,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -35,6 +34,7 @@ import edu.uco.map2016.mediaplayer.R;
 import edu.uco.map2016.mediaplayer.api.HttpJsonUtility;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
 import edu.uco.map2016.mediaplayer.api.SearchQuery;
+import edu.uco.map2016.mediaplayer.api.SearchResults;
 import edu.uco.map2016.mediaplayer.services.ProviderService;
 
 public class SpotifyService extends ProviderService {
@@ -52,19 +52,13 @@ public class SpotifyService extends ProviderService {
         "user-read-private"
     };
 
-    public class SpotifyBinder extends Binder {
-        public SpotifyService getService() {
-            return SpotifyService.this;
-        }
-    }
-
-    private final Binder mBinder = new SpotifyBinder();
+    private final Binder mBinder = new ProviderBinder();
 
     private SharedPreferences mPreferences;
 
     private String mToken = null;
     private Date mExpires = null;
-    private HashMap<Integer, Vector<MediaFile>> mSearchResults = new HashMap<>();
+    private SparseArray<SpotifySearchResults> mSearchResults = new SparseArray<>();
 
     private ScheduledExecutorService mExecutor = null;
 
@@ -100,8 +94,18 @@ public class SpotifyService extends ProviderService {
     }
 
     @Override
+    public @NonNull String getProviderName() {
+        return getResources().getString(R.string.provider_spotify);
+    }
+
+    @Override
     public boolean isConnected() {
         return mToken != null;
+    }
+
+    @Override
+    public boolean isConnectionInteractive() {
+        return !isConnected();
     }
 
     @Override
@@ -139,9 +143,11 @@ public class SpotifyService extends ProviderService {
             int code = utility.connect();
             if (code >= 200 && code < 300) {
                 notifyComplete(REQUEST_CONNECT, requestCode, RESPONSE_OK);
+                sendMessage(MESSAGE_CONNECTION_UPDATE, RESPONSE_OK);
             } else {
                 Log.e(LOG_TAG, "Error connecting to Spotify services.");
                 notifyComplete(REQUEST_CONNECT, requestCode, RESPONSE_EXCEPTION);
+                sendMessage(MESSAGE_CONNECTION_UPDATE, RESPONSE_DISCONNECTED);
             }
         } catch (MalformedURLException mex) {
             Log.wtf(LOG_TAG, "Assertion failed: MalformedURLException from hardcoded URL",
@@ -149,6 +155,7 @@ public class SpotifyService extends ProviderService {
         } catch (IOException iex) {
             Log.e(LOG_TAG, "Error connecting to Spotify services.", iex);
             notifyComplete(REQUEST_CONNECT, requestCode, RESPONSE_EXCEPTION);
+            sendMessage(MESSAGE_CONNECTION_UPDATE, RESPONSE_DISCONNECTED);
         }
     }
 
@@ -174,60 +181,75 @@ public class SpotifyService extends ProviderService {
         });
     }
 
-    private void processSearchResults(int requestCode, JSONObject results) {
-        Vector<MediaFile> searchResults = new Vector<>(20);
-        mSearchResults.put(requestCode, searchResults);
+    private void processSearchResults(int requestCode, JSONObject results, boolean isContinuation) {
+        Vector<MediaFile> searchResults;
+        SpotifySearchResults sSearchResults;
+        if (isContinuation) {
+            sSearchResults = mSearchResults.get(requestCode);
+        } else {
+            sSearchResults = new SpotifySearchResults(this);
+            mSearchResults.put(requestCode, sSearchResults);
+        }
         try {
             JSONObject tracks = results.getJSONObject("tracks");
             if (tracks != null) {
-                JSONArray items = tracks.getJSONArray("items");
-                if (items != null) {
-                    JSONObject track;
-                    MediaFile file;
-                    for (int i = 0; i < items.length(); ++i) {
-                        track = items.getJSONObject(i);
-                        if (track != null) {
-                            String uri = track.getString("uri");
-                            String name = track.getString("name");
-                            if (uri != null && name != null) {
-                                file = new MediaFile(name, Uri.parse(uri), MediaFile.TYPE_AUDIO);
-                                int duration = (int)(track.getLong("duration_ms") / 1000);
-                                int seconds = duration % 60;
-                                int minutes = (duration / 60) % 60;
-                                int hours = (duration / 3600);
-                                StringBuilder durationStr = new StringBuilder();
-                                if (hours > 0) {
-                                    durationStr.append(hours);
+                int limit = tracks.getInt("limit");
+                if (limit > 0) {
+                    searchResults = new Vector<>(limit);
+                    sSearchResults.requestCode = requestCode;
+                    sSearchResults.results = searchResults;
+                    sSearchResults.total = tracks.getInt("total");
+                    sSearchResults.nextQuery = tracks.getString("next");
+                    JSONArray items = tracks.getJSONArray("items");
+                    if (items != null) {
+                        JSONObject track;
+                        MediaFile file;
+                        for (int i = 0; i < items.length(); ++i) {
+                            track = items.getJSONObject(i);
+                            if (track != null) {
+                                String uri = track.getString("uri");
+                                String name = track.getString("name");
+                                if (uri != null && name != null) {
+                                    file = new MediaFile(name, Uri.parse(uri), MediaFile.TYPE_AUDIO);
+                                    file.setProvider(SpotifyService.class.getName());
+                                    int duration = (int) (track.getLong("duration_ms") / 1000);
+                                    int seconds = duration % 60;
+                                    int minutes = (duration / 60) % 60;
+                                    int hours = (duration / 3600);
+                                    StringBuilder durationStr = new StringBuilder();
+                                    if (hours > 0) {
+                                        durationStr.append(hours);
+                                        durationStr.append(':');
+                                    }
+                                    if (minutes < 9) {
+                                        durationStr.append('0');
+                                    }
+                                    durationStr.append(minutes);
                                     durationStr.append(':');
-                                }
-                                if (minutes < 9) {
-                                    durationStr.append('0');
-                                }
-                                durationStr.append(minutes);
-                                durationStr.append(':');
-                                if (seconds < 9) {
-                                    durationStr.append('0');
-                                }
-                                durationStr.append(seconds);
-                                file.setLengthOfFile(durationStr.toString());
-                                JSONArray artists = track.getJSONArray("artists");
-                                if (artists != null && artists.length() > 0) {
-                                    JSONObject artist = artists.getJSONObject(0);
-                                    if (artist != null) {
-                                        String artistName = artist.getString("name");
-                                        if (artistName != null) {
-                                            file.setArtist(artistName);
+                                    if (seconds < 9) {
+                                        durationStr.append('0');
+                                    }
+                                    durationStr.append(seconds);
+                                    file.setLengthOfFile(durationStr.toString());
+                                    JSONArray artists = track.getJSONArray("artists");
+                                    if (artists != null && artists.length() > 0) {
+                                        JSONObject artist = artists.getJSONObject(0);
+                                        if (artist != null) {
+                                            String artistName = artist.getString("name");
+                                            if (artistName != null) {
+                                                file.setArtist(artistName);
+                                            }
                                         }
                                     }
-                                }
-                                JSONObject album = track.getJSONObject("album");
-                                if (album != null) {
-                                    String albumName = album.getString("name");
-                                    if (albumName != null) {
-                                        file.setAlbum(albumName);
+                                    JSONObject album = track.getJSONObject("album");
+                                    if (album != null) {
+                                        String albumName = album.getString("name");
+                                        if (albumName != null) {
+                                            file.setAlbum(albumName);
+                                        }
                                     }
+                                    searchResults.add(file);
                                 }
-                                searchResults.add(file);
                             }
                         }
                     }
@@ -238,13 +260,13 @@ public class SpotifyService extends ProviderService {
         }
     }
 
-    @Override
-    public void search(int requestCode, SearchQuery query) {
+    void search(int requestCode, String query, boolean isContinuation) {
         mExecutor.execute(() -> {
             Resources res = getResources();
             try {
                 Log.d(LOG_TAG, "started search");
-                URL url = new URL("https://api.spotify.com/v1/search?market=from_token&type=track&q=" + Uri.encode(query.getTitle()));
+                Thread.sleep(10000);
+                URL url = new URL(query);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setReadTimeout(res.getInteger(R.integer.read_timeout));
                 connection.setConnectTimeout(res.getInteger(R.integer.connect_timeout));
@@ -254,28 +276,70 @@ public class SpotifyService extends ProviderService {
                 int code = utility.connect();
                 if (code >= 200 && code < 300) {
                     Log.d(LOG_TAG, "Complete");
-                    processSearchResults(requestCode, utility.getJson());
-                    notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_OK);
+                    processSearchResults(requestCode, utility.getJson(), isContinuation);
+                    if (!isContinuation) {
+                        notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_OK);
+                    } else {
+                        SpotifySearchResults results = mSearchResults.get(requestCode);
+                        if (results != null && results.currentListener != null) {
+                            results.currentListener.onSearchUpdated(results.nextQuery != null);
+                            results.currentListener = null;
+                        }
+                    }
                 } else {
                     Log.e(LOG_TAG, "Error connecting to Spotify services.");
-                    notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_EXCEPTION);
+                    if (!isContinuation) {
+                        notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_EXCEPTION);
+                    } else {
+                        SpotifySearchResults results = mSearchResults.get(requestCode);
+                        if (results != null && results.currentListener != null) {
+                            results.currentListener.onSearchFailed();
+                            results.currentListener = null;
+                        }
+                    }
                 }
             } catch (MalformedURLException mex) {
                 Log.wtf(LOG_TAG, "Assertion failed: MalformedURLException from hardcoded URL",
                         mex);
             } catch (IOException iex) {
                 Log.e(LOG_TAG, "Error connecting to Spotify services.", iex);
-                notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_EXCEPTION);
+                if (!isContinuation) {
+                    notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_EXCEPTION);
+                } else {
+                    SpotifySearchResults results = mSearchResults.get(requestCode);
+                    if (results != null && results.currentListener != null) {
+                        results.currentListener.onSearchFailed();
+                        results.currentListener = null;
+                    }
+                }
+            }catch (InterruptedException inex) {
+                Log.e(LOG_TAG, "Interrupted.", inex);
+                if (!isContinuation) {
+                    notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_INTERRUPTED);
+                } else {
+                    SpotifySearchResults results = mSearchResults.get(requestCode);
+                    if (results != null && results.currentListener != null) {
+                        results.currentListener.onSearchFailed();
+                        results.currentListener = null;
+                    }
+                }
             }
         });
     }
 
     @Override
-    public List<MediaFile> getSearchResults(int requestCode, int page) {
-        Log.d(LOG_TAG, "getSearchResults");
-        if (mSearchResults.get(requestCode) == null)
+    public void search(int requestCode, SearchQuery query) {
+        search(requestCode, "https://api.spotify.com/v1/search?market=from_token&type=track&q=" + Uri.encode(query.getQuery()), false);
+    }
+
+    @Override
+    public SearchResults getSearchResults(int requestCode) {
+        if (mSearchResults.get(requestCode) == null) {
             Log.d(LOG_TAG, "not working");
-        return mSearchResults.get(requestCode);
+            return null;
+        } else {
+            return mSearchResults.get(requestCode);
+        }
     }
 
     private void saveAuthenticationDetails() {

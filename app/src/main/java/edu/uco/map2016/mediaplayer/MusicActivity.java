@@ -31,7 +31,7 @@ public class MusicActivity extends Activity {
     private static final String STATE_POSITION
             = "edu.uco.map2016.mediaplayer.MusicActivity.state_position";
 
-    private MediaPlayer mediaPlayer;
+    public static MediaPlayer mediaPlayer;
     public TextView songName, duration;
     private MediaSessionManager mManager;
     private MediaSession mSession;
@@ -66,11 +66,25 @@ public class MusicActivity extends Activity {
         });
     }
 
+    public void startService(View v) {
+        Intent serviceIntent = new Intent(MusicActivity.this, NotificationService.class);
+        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+        startService(serviceIntent);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_music);
 
+
+
+        Intent serviceIntent = new Intent(MusicActivity.this, NotificationService.class);
+        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
+        startService(serviceIntent);
+        //mediaPlayer.start();
+
+//
 
 
         songName = (TextView) findViewById(R.id.songName);

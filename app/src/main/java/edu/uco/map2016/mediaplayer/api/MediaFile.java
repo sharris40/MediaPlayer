@@ -16,6 +16,7 @@ public class MediaFile implements Parcelable {
     private static final int ARTIST_PRESENT = 0x04;
     private static final int ALBUM_PRESENT = 0x08;
     private static final int YEAR_PRESENT = 0x10;
+    private static final int PROVIDER_PRESENT = 0x20;
 
     private String name;
     private Uri fileAddress;
@@ -25,6 +26,8 @@ public class MediaFile implements Parcelable {
     private String artist;
     private String album;
     private String yearPublished;
+
+    private String provider;
 
     public MediaFile() {
         /*fileAddress = new String();
@@ -66,6 +69,8 @@ public class MediaFile implements Parcelable {
             album = in.readString();
         if ((optionalParts & YEAR_PRESENT) == YEAR_PRESENT)
             yearPublished = in.readString();
+        if ((optionalParts & PROVIDER_PRESENT) == PROVIDER_PRESENT)
+            provider = in.readString();
     }
 
     public static final Creator<MediaFile> CREATOR = new Creator<MediaFile>() {
@@ -104,6 +109,9 @@ public class MediaFile implements Parcelable {
     public String getYearPublished() {
         return yearPublished;
     }
+    public String getProvider() {
+        return provider;
+    }
 
     public void setName(@NonNull String a) {
         name = a;
@@ -128,6 +136,9 @@ public class MediaFile implements Parcelable {
     }
     public void setYearPublished(String a) {
         yearPublished = a;
+    }
+    public void setProvider(String provider) {
+        this.provider = provider;
     }
 
     public String getDetails() {
@@ -170,6 +181,8 @@ public class MediaFile implements Parcelable {
             optionalParts |= ALBUM_PRESENT;
         if (yearPublished != null)
             optionalParts |= YEAR_PRESENT;
+        if (provider != null)
+            optionalParts |= PROVIDER_PRESENT;
         parcel.writeInt(optionalParts);
         if (imageAddress != null)
             parcel.writeParcelable(imageAddress, i);
@@ -181,5 +194,7 @@ public class MediaFile implements Parcelable {
             parcel.writeString(album);
         if (yearPublished != null)
             parcel.writeString(yearPublished);
+        if (provider != null)
+            parcel.writeString(provider);
     }
 }
