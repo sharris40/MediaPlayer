@@ -2,16 +2,22 @@ package edu.uco.map2016.mediaplayer.services;
 
 import android.app.Service;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
+import android.util.Log;
+
+import edu.uco.map2016.mediaplayer.api.AbstractMediaPlayer;
+import edu.uco.map2016.mediaplayer.api.MediaFile;
 
 public class ProviderManagerService extends Service {
     //private static final String PREFERENCES = "provider_manager_preferences";
     //private SharedPreferences mPreferences;
 
     private static final int UNUSED_REQUEST_CODE = 0x7FFFFFFF;
+    private static final String LOG_TAG = "ProviderManagerService";
 
     public class ProviderManagerBinder extends Binder {
         public ProviderManagerService getService() {
@@ -56,5 +62,40 @@ public class ProviderManagerService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return mBinder;
+    }
+
+    private void getLocalMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener) {
+
+    }
+
+    public void getMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener, MediaFile file) {
+        if (file.isLocal()) {
+            getLocalMediaPlayer(context, listener);
+        } else {
+            try {
+                Class<?> providerGeneric = Class.forName(file.getProvider()).asSubclass(ProviderService.class);
+                if (ProviderService.class.isAssignableFrom(providerGeneric)) {
+                    Intent startIntent = new Intent(this, providerGeneric);
+                    bindService(startIntent, new ServiceConnection() {
+                        @Override
+                        public void onServiceConnected(ComponentName name, IBinder service) {
+                            ProviderService.ProviderBinder binder = (ProviderService.ProviderBinder) service;
+                            ProviderService sService = binder.getService();
+                            if (sService.isConnected()) {
+                                sService.getMediaPlayer(context, listener);
+                            }
+                            unbindService(this);
+                        }
+
+                        @Override
+                        public void onServiceDisconnected(ComponentName name) {
+
+                        }
+                    }, 0);
+                }
+            } catch (ClassNotFoundException nex) {
+                Log.wtf(LOG_TAG, "Class " + file.getProvider() + " is not a ProviderService.");
+            }
+        }
     }
 }

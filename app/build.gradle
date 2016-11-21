@@ -31,6 +31,7 @@ dependencies {
     dependencies {
         compile 'com.android.support:support-annotations:25.0.0'
         compile 'com.spotify.sdk:spotify-android-auth-1.0.0@aar'
+        compile 'com.spotify.sdk:spotify-player-beta23-noconnect-2.20b@aar'
     }
     repositories {
         flatDir {

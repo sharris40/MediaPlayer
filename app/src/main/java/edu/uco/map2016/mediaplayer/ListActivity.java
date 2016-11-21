@@ -1,6 +1,7 @@
 package edu.uco.map2016.mediaplayer;
 
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.ComponentName;
@@ -12,6 +13,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -19,18 +21,17 @@ import java.util.Vector;
 
 import edu.uco.map2016.mediaplayer.ListViewFragment.ListSelectionListener;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
-import edu.uco.map2016.mediaplayer.api.SearchInterface;
 import edu.uco.map2016.mediaplayer.api.SearchQuery;
 import edu.uco.map2016.mediaplayer.api.SearchResults;
 import edu.uco.map2016.mediaplayer.services.SearchService;
 
+import static edu.uco.map2016.mediaplayer.MainActivity.searchInterface;
+
 //TODO: Rename this class so it doesn't match Android's ListActivity.
-public class ListActivity extends Activity implements ListSelectionListener {
+public class ListActivity extends Activity implements ListSelectionListener, AddToPlaylistDialogueFragment.PickAddToPlaylistListener {
     private static final String LOG_TAG = "ListActivity";
 
     //TextView searchResultView;
-
-    public static SearchInterface searchInterface;
 
     //public static String[] mListArray;
     public static Vector<String> mListArray = new Vector<String>();
@@ -130,6 +131,32 @@ public class ListActivity extends Activity implements ListSelectionListener {
     public static final int CASE_NOT_A_MENU_OPTION = -1;
     public static final int CASE_SEE_ALL_MUSIC = -2;
     public static final int CASE_SEE_ALL_VIDEO = -3;
+    public static final int CASE_FILE_IN_FRAGMENT = -4;
+
+    private static final int CASE_PLAY_FILE = 0;
+    private static final int CASE_ADD_TO_PLAYLIST = 1;
+    private static final int CASE_CANCEL = 2;
+
+    private final int REQUEST_CODE = 0;
+
+    private String resultDisplay;
+    public int resultIndex;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode != Activity.RESULT_CANCELED) { return;
+        }
+        if (requestCode == REQUEST_CODE) {
+            if (data == null) {
+                return;
+            }
+            resultDisplay = AddToPlaylistActivity.wasAnswerShown(data);
+            //Toast.makeText(getApplicationContext(), resultDisplay, Toast.LENGTH_SHORT).show();
+            MainActivity.playlistInterface.addMediaFile(Integer.parseInt(resultDisplay), MainActivity.searchInterface.getListResult().get(resultIndex));
+            Toast.makeText(getApplicationContext(), "Added File: " + MainActivity.searchInterface.getListResult().get(resultIndex).getName() + " to Playlist: " + MainActivity.playlistInterface.getListOfPlaylists().get(Integer.parseInt(resultDisplay)).getName(), Toast.LENGTH_SHORT).show();
+            //labelResult.setText(resultDisplay);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,9 +170,7 @@ public class ListActivity extends Activity implements ListSelectionListener {
         final String textToSearch = getIntent().getStringExtra("SEARCH");
         mSearchString = textToSearch;
 
-        searchInterface = new SearchInterface();
-
-        searchInterface.search(textToSearch);
+        MainActivity.searchInterface.search(textToSearch);
 
         mListArray.removeAllElements();
 
@@ -155,22 +180,22 @@ public class ListActivity extends Activity implements ListSelectionListener {
         mListArray.add("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tMusic\n");
         mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
 
-        for (int cntr = 0, cntr2 = 0; (cntr < searchInterface.getListResult().size()) && cntr2 < 20; cntr++) {
-            if (searchInterface.getListResult().get(cntr).getType() == MediaFile.TYPE_AUDIO) {
-                if (searchInterface.getListResult().get(cntr).getName().length() > STRING_CAPACITY) {
-                    if (searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
+        for (int cntr = 0, cntr2 = 0; (cntr < MainActivity.searchInterface.getListResult().size()) && cntr2 < 20; cntr++) {
+            if (MainActivity.searchInterface.getListResult().get(cntr).getType() == MediaFile.TYPE_AUDIO) {
+                if (MainActivity.searchInterface.getListResult().get(cntr).getName().length() > STRING_CAPACITY) {
+                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
                     }
                     else {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails());
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails());
                     }
                 }
                 else {
-                    if (searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName() + "\n" + searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
+                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
                     }
                     else {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName() + "\n" + searchInterface.getListResult().get(cntr).getDetails());
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails());
                     }
                 }
                 mListArrayIndexForSeatchInterface.add(cntr);
@@ -187,22 +212,22 @@ public class ListActivity extends Activity implements ListSelectionListener {
         mListArray.add("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tVideo\n");
         mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
 
-        for (int cntr = 0, cntr2 = 0; (cntr < searchInterface.getListResult().size()) && cntr2 < 20; cntr++) {
-            if (searchInterface.getListResult().get(cntr).getType() == MediaFile.TYPE_VIDEO) {
-                if (searchInterface.getListResult().get(cntr).getName().length() > STRING_CAPACITY) {
-                    if (searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
+        for (int cntr = 0, cntr2 = 0; (cntr < MainActivity.searchInterface.getListResult().size()) && cntr2 < 20; cntr++) {
+            if (MainActivity.searchInterface.getListResult().get(cntr).getType() == MediaFile.TYPE_VIDEO) {
+                if (MainActivity.searchInterface.getListResult().get(cntr).getName().length() > STRING_CAPACITY) {
+                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
                     }
                     else {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails());
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails());
                     }
                 }
                 else {
-                    if (searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName() + "\n" + searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
+                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
                     }
                     else {
-                        mListArray.add(searchInterface.getListResult().get(cntr).getName() + "\n" + searchInterface.getListResult().get(cntr).getDetails());
+                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails());
                     }
                 }
                 mListArrayIndexForSeatchInterface.add(cntr);
@@ -302,6 +327,75 @@ public class ListActivity extends Activity implements ListSelectionListener {
         /*if (mQuoteFragment.getShownIndex() != index) {
             mQuoteFragment.showIndex(index);
         }*/
+        Log.d(LOG_TAG, "ListSelection: " + index);
         contactIndex = index;
+    }
+    @Override
+    public void onPickAddToPlaylistClick(int optionIndex, DialogFragment dialog) {
+        switch(optionIndex) {
+            case CASE_PLAY_FILE:
+                MediaFile file;
+                if (resultIndex == CASE_FILE_IN_FRAGMENT) {
+                    file = mFragment.getMediaFile();
+                } else {
+                    file = searchInterface.getListResult().get(resultIndex);
+                }
+                Intent playIntent;
+                if (file.getType() == MediaFile.TYPE_AUDIO) {
+                    playIntent = MusicActivity.getInstance(this, file);
+                } else {
+                    playIntent = VideoActivity.getInstance(this, file);
+                }
+                startActivity(playIntent);
+                break;
+            case CASE_ADD_TO_PLAYLIST:
+                Intent activityAddToPlayList = new Intent(ListActivity.this, AddToPlaylistActivity.class); //getApplicationContext()
+                //mListArray.removeAllElements();
+                startActivityForResult(activityAddToPlayList, REQUEST_CODE);
+                break;
+            case CASE_CANCEL:
+
+                break;
+        }
+        /*//String color = getResources().getStringArray(R.array.colors_array)[colorIndex];
+        //textview.setText(color + " has picked!");
+        //Toast.makeText(getApplicationContext(), "It Worked!", Toast.LENGTH_SHORT).show();
+
+        //Uri uri = Uri.parse(urlArray[colorIndex]); // missing 'http://' will cause crashed
+        //Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+        //startActivity(intent);
+
+        // Define the Notification's expanded message and Intent:
+
+        //mContentView.setTextViewText(R.id.text, contentText + " (" + ++mNotificationCount + ")");
+
+        // Build the Notification
+
+        Notification.Builder notificationBuilder = new Notification.Builder(
+                getApplicationContext())
+                //.setTicker(tickerText)
+                .setSmallIcon(android.R.drawable.stat_sys_warning)
+                .setAutoCancel(true)
+                .setContentIntent(mContentIntent);
+
+        //.setSound(soundURI)
+        //.setVibrate(mVibratePattern)
+        //.setContent(mContentView);
+
+        //Intent activityAdd = new Intent(MainActivity.this, DepartmentInfoActivity.class); //getApplicationContext()
+
+        //Toast.makeText(getApplicationContext(), Integer.toString(colorIndex), Toast.LENGTH_SHORT).show();
+
+        //mNotificationIntent.putExtra("INDEX", Integer.toString(colorIndex));
+
+        // Pass the Notification to the NotificationManager:
+        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.notify(MY_NOTIFICATION_ID,
+                notificationBuilder.build());
+
+        //mNotificationIntent.putExtra("INDEX", Integer.toString(colorIndex));
+
+        index = colorIndex;
+        */
     }
 }

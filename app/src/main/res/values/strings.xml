@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8" ?>
 <resources>
     <string name="app_name">TermProject2016</string>
     <string name="actOpen_btnBrowse">Browse for Files</string>
@@ -32,4 +33,24 @@
     <string name="cd_previous">Skip backwards</string>
     <string name="cd_play">Play and pause</string>
     <string name="cd_next">Skip forwards</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string-array name="add_to_playlist_array">
+        <item>Play File</item>
+        <item>Add To Playlist</item>
+        <item>Cancel</item>
+    </string-array>
+    <string-array name="remove_playlist_array">
+        <item>Play Playlist</item>
+        <item>View Playlist</item>
+        <item>Delete Playlist</item>
+        <item>Cancel</item>
+    </string-array>
+    <string-array name="remove_from_playlist_array">
+        <item>Play File</item>
+        <item>Remove From Playlist</item>
+        <item>Cancel</item>
+    </string-array>
+    <string name="title_activity_add_to_playlist">AddToPlaylistActivity</string>
 </resources>

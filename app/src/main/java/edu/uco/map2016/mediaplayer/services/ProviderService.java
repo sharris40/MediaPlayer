@@ -2,6 +2,7 @@ package edu.uco.map2016.mediaplayer.services;
 
 import android.app.Activity;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.support.annotation.NonNull;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import edu.uco.map2016.mediaplayer.api.AbstractMediaPlayer;
 import edu.uco.map2016.mediaplayer.api.SearchQuery;
 import edu.uco.map2016.mediaplayer.api.SearchResults;
 
@@ -87,4 +89,5 @@ public abstract class ProviderService extends Service {
 
     public abstract void search(int requestCode, SearchQuery query);
     public abstract SearchResults getSearchResults(int requestCode);
+    public abstract void getMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener);
 }

@@ -11,7 +11,7 @@ import android.view.View;
 import android.widget.RemoteViews;
 import android.widget.Toast;
 
-import static edu.uco.map2016.mediaplayer.MusicActivity.*;
+import static edu.uco.map2016.mediaplayer.MusicActivity.mediaPlayer;
 
 public class NotificationService extends Service {
 
@@ -21,6 +21,8 @@ public class NotificationService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (mediaPlayer != null)
+            mediaPlayer.dispose();
     }
 
     @Override
@@ -49,9 +51,10 @@ public class NotificationService extends Service {
                 Constants.ACTION.STOPFOREGROUND_ACTION)) {
             Log.i(LOG_TAG, "Received Stop Foreground Intent");
             Toast.makeText(this, "Service Stoped", Toast.LENGTH_SHORT).show();
+            if (mediaPlayer != null)
+                mediaPlayer.pause();
             stopForeground(true);
             stopSelf();
-            mediaPlayer.pause();
         }
         return START_STICKY;
     }

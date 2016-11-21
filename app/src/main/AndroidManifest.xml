@@ -38,7 +38,7 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="edu.uco.map2016.mediaplayer.MainActivity" />
 
-            <service android:name=".NotificationService" />
+        <service android:name=".NotificationService" />
         </activity>
         <activity
             android:name=".ListActivity"
@@ -59,11 +59,15 @@
         <activity
             android:name=".VideoActivity"
             android:label="@string/title_activity_player"
+            android:configChanges="orientation"
             android:parentActivityName=".MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="edu.uco.map2016.mediaplayer.MainActivity" />
         </activity>
+        <activity
+            android:name=".AddToPlaylistActivity"
+            android:label="@string/title_activity_add_to_playlist"/>
 
         <service
             android:name=".services.SearchService"
@@ -80,7 +84,7 @@
         <service android:name="edu.uco.map2016.mediaplayer.NotificationService" />
 
         <activity android:name=".services.providers.spotify.SpotifyLoginActivity" />
-        <activity android:name=".ProviderListActivity"></activity>
+        <activity android:name=".ProviderListActivity"/>
     </application>
 
 </manifest>

@@ -1,6 +1,7 @@
 package edu.uco.map2016.mediaplayer.services.providers.spotify;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
@@ -15,6 +16,7 @@ import android.util.SparseArray;
 import com.spotify.sdk.android.authentication.AuthenticationClient;
 import com.spotify.sdk.android.authentication.AuthenticationRequest;
 import com.spotify.sdk.android.authentication.AuthenticationResponse;
+import com.spotify.sdk.android.player.Config;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,6 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import edu.uco.map2016.mediaplayer.R;
+import edu.uco.map2016.mediaplayer.api.AbstractMediaPlayer;
 import edu.uco.map2016.mediaplayer.api.HttpJsonUtility;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
 import edu.uco.map2016.mediaplayer.api.SearchQuery;
@@ -265,7 +268,6 @@ public class SpotifyService extends ProviderService {
             Resources res = getResources();
             try {
                 Log.d(LOG_TAG, "started search");
-                Thread.sleep(10000);
                 URL url = new URL(query);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setReadTimeout(res.getInteger(R.integer.read_timeout));
@@ -312,17 +314,6 @@ public class SpotifyService extends ProviderService {
                         results.currentListener = null;
                     }
                 }
-            }catch (InterruptedException inex) {
-                Log.e(LOG_TAG, "Interrupted.", inex);
-                if (!isContinuation) {
-                    notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_INTERRUPTED);
-                } else {
-                    SpotifySearchResults results = mSearchResults.get(requestCode);
-                    if (results != null && results.currentListener != null) {
-                        results.currentListener.onSearchFailed();
-                        results.currentListener = null;
-                    }
-                }
             }
         });
     }
@@ -339,6 +330,16 @@ public class SpotifyService extends ProviderService {
             return null;
         } else {
             return mSearchResults.get(requestCode);
+        }
+    }
+
+    @Override
+    public void getMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener) {
+        if (mToken != null) {
+            SpotifyMediaPlayer player = new SpotifyMediaPlayer();
+            player.setOnPreparedListener(listener);
+            Config config = new Config(context, mToken, getResources().getString(R.string.spotify_client_id));
+            player.initialize(config);
         }
     }
 

@@ -12,10 +12,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
+import edu.uco.map2016.mediaplayer.api.PlaylistInterface;
+import edu.uco.map2016.mediaplayer.api.SearchInterface;
 import edu.uco.map2016.mediaplayer.services.ProviderManagerService;
 
 public class MainActivity extends Activity {
     private static final String LOG_TAG = "MainActivity";
+
+    public static SearchInterface searchInterface;
+    public static PlaylistInterface playlistInterface;
 
     Button searchButton;
     Button video;
@@ -30,6 +35,9 @@ public class MainActivity extends Activity {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        searchInterface = new SearchInterface();
+        playlistInterface = new PlaylistInterface();
 
         Intent serviceIntent = new Intent(this, ProviderManagerService.class);
         startService(serviceIntent);

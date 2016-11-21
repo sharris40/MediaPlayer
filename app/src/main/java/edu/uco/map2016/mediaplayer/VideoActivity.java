@@ -10,11 +10,16 @@ import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.MediaController;
 import android.widget.VideoView;
 
 import edu.uco.map2016.mediaplayer.api.MediaFile;
+
+import static android.content.ContentValues.TAG;
 
 
 public class VideoActivity extends Activity {
@@ -26,9 +31,17 @@ public class VideoActivity extends Activity {
             = "edu.uco.map2016.mediaplayer.VideoActivity.state_position";
 
     private VideoView myVideoView;
-    private int position = 0;
+    private int position = 0 ;
     private ProgressDialog progressDialog;
     private MediaController mediaControls;
+
+    int counter;
+    int counter2;
+
+    int height = 0;
+    int width = 0;
+    int height2 = 0;
+    int width2 = 0;
 
     public static Intent getInstance(Context context, MediaFile media) {
         Intent intent = new Intent(context, VideoActivity.class);
@@ -44,7 +57,9 @@ public class VideoActivity extends Activity {
         } catch (Exception e) {
             Log.e(LOG_TAG, "Error initializing media player", e);
         }
-        myVideoView.requestFocus();
+
+
+
         myVideoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
@@ -55,7 +70,7 @@ public class VideoActivity extends Activity {
                     myVideoView.start();
                 } else {
 
-                    myVideoView.pause();
+                    myVideoView.stopPlayback();
                 }
             }
         });
@@ -65,8 +80,36 @@ public class VideoActivity extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if( savedInstanceState != null ) {
+            position = savedInstanceState.getInt("position");
+        }
+
+
+        DisplayMetrics dm;
+
+        dm=new DisplayMetrics();
+        this.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        height=dm.heightPixels;
+        width=dm.widthPixels;
+        height2=dm.heightPixels;
+        width2=dm.widthPixels;
+
+        // myVideoView.setMinimumHeight(height);
+        //
+        // myVideoView.setMinimumWidth(width);
 
         setContentView(R.layout.activity_video);
+
+
+
+
+
+        if (savedInstanceState != null) {
+            // Restore value of members from saved state
+            position = savedInstanceState.getInt("Position");
+
+
+        }
 
 
         if (mediaControls == null) {
@@ -104,6 +147,13 @@ public class VideoActivity extends Activity {
 
     }
 
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu, menu);//Menu Resource, Menu
+        return true;
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
@@ -115,19 +165,72 @@ public class VideoActivity extends Activity {
         }
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        super.onSaveInstanceState(savedInstanceState);
 
-        savedInstanceState.putInt("Position", myVideoView.getCurrentPosition());
-        myVideoView.pause();
-    }
+
+
+
 
     @Override
     public void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        position = savedInstanceState.getInt("Position");
+        int pos = savedInstanceState.getInt("Position");
+
+        myVideoView.seekTo(pos);
+
+
+        // Toast.makeText(getApplicationContext(), "QQrefewfeQ", Toast.LENGTH_SHORT).show();
+
+    }
+
+
+
+
+    // This gets called before onPause so pause video here.
+
+
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.new_game:
+                int left = myVideoView.getLeft();
+                int top = myVideoView.getTop();
+                int right =  myVideoView.getRight();
+                int botton = myVideoView.getBottom() ;
+                myVideoView.layout(left/2, top/2, right/2, botton/2);
+
+                return true;
+
+            case R.id.help:
+                int left2 = myVideoView.getLeft();
+                int top2 = myVideoView.getTop();
+                int right2 = myVideoView.getRight();
+                int botton2 = myVideoView.getBottom();
+                myVideoView.layout(left2 * 2, top2 * 2, right2 * 2, botton2 * 2);
+
+
+                return true;
+
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume called");
         myVideoView.seekTo(position);
+        myVideoView.start(); //Or use resume() if it doesn't work. I'm not sure
+    }
+
+    // This gets called before onPause so pause video here.
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        position = myVideoView.getCurrentPosition();
+        myVideoView.pause();
+        outState.putInt("position", position);
     }
 }

@@ -3,11 +3,11 @@ package edu.uco.map2016.mediaplayer;
 import android.app.ListFragment;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseIntArray;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +15,7 @@ import java.util.List;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
 import edu.uco.map2016.mediaplayer.api.SearchResults;
 
+import static edu.uco.map2016.mediaplayer.ListActivity.CASE_FILE_IN_FRAGMENT;
 import static edu.uco.map2016.mediaplayer.ListActivity.CASE_NOT_A_MENU_OPTION;
 import static edu.uco.map2016.mediaplayer.ListActivity.STRING_CAPACITY;
 import static edu.uco.map2016.mediaplayer.ListActivity.mListArray;
@@ -30,6 +31,8 @@ public class ListViewFragment extends ListFragment {
     private ArrayAdapter<String> mAdapter;
 
     private final LinkedList<SearchResults> mResults = new LinkedList<>();
+    private final SparseIntArray mListArrayIndexForSearchResults = new SparseIntArray();
+    private int mResultIndex = -1;
 
     public interface ListSelectionListener {
         public void onListSelection(int index);
@@ -40,7 +43,16 @@ public class ListViewFragment extends ListFragment {
         //getListView().setItemChecked(pos, true);
         //mListener.onListSelection(pos);
         if ((mListArrayIndexForSeatchInterface.get(pos) >= 0) && (mListArrayIndexForSeatchInterface.get(pos) < mListArray.size())) {
-            Toast.makeText(getActivity().getApplicationContext(), ListActivity.searchInterface.getListResult().get(mListArrayIndexForSeatchInterface.get(pos)).getFileLocationAddress().toString(), Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getActivity().getApplicationContext(), ListActivity.searchInterface.getListResult().get(mListArrayIndexForSeatchInterface.get(pos)).getFileLocationAddress().toString(), Toast.LENGTH_SHORT).show();
+            ((ListActivity)getActivity()).resultIndex = ListActivity.mListArrayIndexForSeatchInterface.get(pos);
+            AddToPlaylistDialogueFragment d = new AddToPlaylistDialogueFragment();
+            d.show(getFragmentManager(), "colors");
+        }
+        else if (mListArrayIndexForSeatchInterface.get(pos) == CASE_FILE_IN_FRAGMENT) {
+            ((ListActivity)getActivity()).resultIndex = CASE_FILE_IN_FRAGMENT;
+            mResultIndex = mListArrayIndexForSearchResults.get(pos);
+            AddToPlaylistDialogueFragment d = new AddToPlaylistDialogueFragment();
+            d.show(getFragmentManager(), "colors");
         }
         else {
             switch (mListArrayIndexForSeatchInterface.get(pos)) {
@@ -121,7 +133,8 @@ public class ListViewFragment extends ListFragment {
                         mListArray.add(onlineFiles.get(cntr).getName() + "\n" + onlineFiles.get(cntr).getDetails());
                     }
                 }
-                mListArrayIndexForSeatchInterface.add(cntr);
+                mListArrayIndexForSeatchInterface.add(CASE_FILE_IN_FRAGMENT);
+                mListArrayIndexForSearchResults.put(mListArrayIndexForSeatchInterface.size() - 1, cntr);
                 cntr2++;
             }
         }
@@ -143,6 +156,11 @@ public class ListViewFragment extends ListFragment {
 
     public void finishSearch() {
         // TODO: Add logic
+    }
+
+    public MediaFile getMediaFile() {
+        //TODO: make work with multiple results
+        return mResults.get(0).getResults().get(mResultIndex);
     }
 }
 /*

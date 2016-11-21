@@ -3,16 +3,19 @@ package edu.uco.map2016.mediaplayer;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
 import android.media.session.MediaSession;
 import android.media.session.MediaSessionManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.MediaController;
@@ -21,7 +24,9 @@ import android.widget.TextView;
 
 import java.util.concurrent.TimeUnit;
 
+import edu.uco.map2016.mediaplayer.api.AbstractMediaPlayer;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
+import edu.uco.map2016.mediaplayer.services.ProviderManagerService;
 
 public class MusicActivity extends Activity {
     private static final String LOG_TAG = "TermProject_player";
@@ -31,7 +36,7 @@ public class MusicActivity extends Activity {
     private static final String STATE_POSITION
             = "edu.uco.map2016.mediaplayer.MusicActivity.state_position";
 
-    public static MediaPlayer mediaPlayer;
+    public static AbstractMediaPlayer mediaPlayer = null;
     public TextView songName, duration;
     private MediaSessionManager mManager;
     private MediaSession mSession;
@@ -52,18 +57,38 @@ public class MusicActivity extends Activity {
     }
 
     private void createMedia(MediaFile media) {
-        mediaPlayer = MediaPlayer.create(this, media.getFileLocationAddress());
-        mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+        Intent providerIntent = new Intent(this, ProviderManagerService.class);
+        bindService(providerIntent, new ServiceConnection() {
             @Override
-            public void onPrepared(MediaPlayer mediaPlayer) {
-                btnPlay.setClickable(true);
-                btnPause.setClickable(false);
-                btnFF.setClickable(false);
-                btnRew.setClickable(false);
-                finalTime = mediaPlayer.getDuration();
-                seekbar.setMax((int) finalTime);
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                ProviderManagerService.ProviderManagerBinder binder = (ProviderManagerService.ProviderManagerBinder) service;
+                binder.getService().getMediaPlayer(MusicActivity.this, new AbstractMediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(AbstractMediaPlayer player, boolean isPlaying) {
+                        mediaPlayer = player;
+                        mediaPlayer.setTrackChangeListener(new AbstractMediaPlayer.TrackChangeListener() {
+                            @Override
+                            public void onTrackChange(MediaFile track, int index) {
+                                Log.d(LOG_TAG, "onTrackChange");
+                                btnPlay.setClickable(true);
+                                btnPause.setClickable(false);
+                                btnFF.setClickable(false);
+                                btnRew.setClickable(false);
+                                finalTime = mediaPlayer.getDuration();
+                                Log.d(LOG_TAG, Double.toString(finalTime));
+                                seekbar.setMax((int) finalTime);
+                            }
+                        });
+                        player.loadFile(media);
+                    }
+                }, media);
             }
-        });
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        }, 0);
     }
 
     public void startService(View v) {
@@ -95,6 +120,7 @@ public class MusicActivity extends Activity {
         btnFF = (ImageButton)findViewById(R.id.media_ff);
         btnRew = (ImageButton)findViewById(R.id.media_rew);
         seekbar.setClickable(false);
+        Log.d(LOG_TAG, "play button clickable: " + (btnPlay.isClickable() ? "yes" : "no"));
 
         Intent intent = getIntent();
         if (intent != null) {
@@ -106,8 +132,39 @@ public class MusicActivity extends Activity {
                         != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                             REQUEST_PERMISSION_READ_EXTERNAL_STORAGE);
-                } else {
+                } else if (mediaPlayer == null) {
                     createMedia(media);
+                } else {
+                    finalTime = mediaPlayer.getDuration();
+                    if (finalTime < 0) {
+                        mediaPlayer.setTrackChangeListener(new AbstractMediaPlayer.TrackChangeListener() {
+                            @Override
+                            public void onTrackChange(MediaFile track, int index) {
+                                Log.d(LOG_TAG, "onTrackChange");
+                                btnPlay.setClickable(true);
+                                btnPause.setClickable(false);
+                                btnFF.setClickable(false);
+                                btnRew.setClickable(false);
+                                finalTime = mediaPlayer.getDuration();
+                                seekbar.setMax((int) finalTime);
+                            }
+                        });
+                        mediaPlayer.loadFile(media);
+                    } else if (mediaPlayer.isPlaying()) {
+                        btnPlay.setClickable(false);
+                        btnPause.setClickable(true);
+                        btnFF.setClickable(true);
+                        btnRew.setClickable(true);
+                        seekbar.setMax((int) finalTime);
+                        durationHandler.postDelayed(updateSeekBarTime, 100);
+                    } else {
+                        Log.d(LOG_TAG, "song loaded but stopped");
+                        btnPlay.setClickable(true);
+                        btnPause.setClickable(false);
+                        btnFF.setClickable(false);
+                        btnRew.setClickable(false);
+                        seekbar.setMax((int) finalTime);
+                    }
                 }
             }
         }
@@ -119,7 +176,8 @@ public class MusicActivity extends Activity {
                                            @NonNull int[] grantResults) {
         if (requestCode == REQUEST_PERMISSION_READ_EXTERNAL_STORAGE
                 && grantResults.length > 0
-                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                && mediaPlayer == null) {
             createMedia(getIntent().getParcelableExtra(EXTRA_MEDIA));
         }
     }
@@ -129,8 +187,8 @@ public class MusicActivity extends Activity {
         btnPause.setClickable(true);
         btnFF.setClickable(true);
         btnRew.setClickable(true);
-        mediaPlayer.start();
-        timeElapsed = mediaPlayer.getCurrentPosition();
+        mediaPlayer.play();
+        timeElapsed = mediaPlayer.getPosition();
         seekbar.setProgress((int) timeElapsed);
         durationHandler.postDelayed(updateSeekBarTime, 100);
     }
@@ -139,14 +197,16 @@ public class MusicActivity extends Activity {
     private Runnable updateSeekBarTime = new Runnable() {
         public void run() {
 
-            timeElapsed = mediaPlayer.getCurrentPosition();
+            timeElapsed = mediaPlayer.getPosition();
+            if (timeElapsed >= 0 && finalTime >= 0) {
 
-            seekbar.setProgress((int) timeElapsed);
+                seekbar.setProgress((int) timeElapsed);
 
-            double timeRemaining = finalTime - timeElapsed;
-            duration.setText(String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes((long) timeRemaining),
-                    TimeUnit.MILLISECONDS.toSeconds((long) timeRemaining) - TimeUnit.MINUTES.toSeconds
-                            (TimeUnit.MILLISECONDS.toMinutes((long) timeRemaining))));
+                double timeRemaining = finalTime - timeElapsed;
+                duration.setText(String.format("%d min, %d sec", TimeUnit.MILLISECONDS.toMinutes((long) timeRemaining),
+                        TimeUnit.MILLISECONDS.toSeconds((long) timeRemaining) - TimeUnit.MINUTES.toSeconds
+                                (TimeUnit.MILLISECONDS.toMinutes((long) timeRemaining))));
+            }
 
 
             durationHandler.postDelayed(this, 100);
@@ -155,6 +215,7 @@ public class MusicActivity extends Activity {
 
 
     public void pause(View view) {
+        Log.d(LOG_TAG, "pause");
         btnPlay.setClickable(true);
         btnPause.setClickable(false);
         btnFF.setClickable(true);
@@ -169,7 +230,7 @@ public class MusicActivity extends Activity {
             timeElapsed = timeElapsed + forwardTime;
 
 
-            mediaPlayer.seekTo((int) timeElapsed);
+            mediaPlayer.seek((long)timeElapsed);
         }
     }
 
@@ -180,7 +241,7 @@ public class MusicActivity extends Activity {
             timeElapsed = timeElapsed - backwardTime;
 
 
-            mediaPlayer.seekTo((int) timeElapsed);
+            mediaPlayer.seek((long)timeElapsed);
         }
     }
 
