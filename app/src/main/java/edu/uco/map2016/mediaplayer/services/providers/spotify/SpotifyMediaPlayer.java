@@ -255,4 +255,10 @@ public class SpotifyMediaPlayer extends AbstractMediaPlayer implements SpotifyPl
     public void onPlaybackError(Error error) {
 
     }
+
+    @Override
+    public void clearQueue() {
+        super.clearQueue();
+        mSongReady = false;
+    }
 }

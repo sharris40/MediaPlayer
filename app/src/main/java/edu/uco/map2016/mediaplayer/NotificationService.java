@@ -2,21 +2,26 @@ package edu.uco.map2016.mediaplayer;
 
 
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
-import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
-import android.widget.Toast;
 
 import static edu.uco.map2016.mediaplayer.MusicActivity.mediaPlayer;
 
 public class NotificationService extends Service {
 
     Notification status;
+    private NotificationManager mNotificationManager;
     private final String LOG_TAG = "NotificationService";
+    private static final int FORWARD_TIME = 2000;
+
+    private RemoteViews views;
+    private RemoteViews bigViews;
 
     @Override
     public void onDestroy() {
@@ -34,36 +39,61 @@ public class NotificationService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent.getAction().equals(Constants.ACTION.STARTFOREGROUND_ACTION)) {
             showNotification();
-            Toast.makeText(this, "Player Started", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(this, "Player Started", Toast.LENGTH_SHORT).show();
 
 
 
         } else if (intent.getAction().equals(Constants.ACTION.PREV_ACTION)) {
-            Toast.makeText(this, "Clicked Previous", Toast.LENGTH_SHORT).show();
-            Log.i(LOG_TAG, "Clicked Previous");
+            long position = mediaPlayer.getPosition();
+            if ((position - FORWARD_TIME) > 0) {
+                mediaPlayer.seek(position - FORWARD_TIME);
+            } else {
+                mediaPlayer.seek(0);
+            }
+
         } else if (intent.getAction().equals(Constants.ACTION.PLAY_ACTION)) {
-            Toast.makeText(this, "Clicked Play", Toast.LENGTH_SHORT).show();
-            Log.i(LOG_TAG, "Clicked Play");
+            //Toast.makeText(this, "Clicked Play", Toast.LENGTH_SHORT).show();
+           // Log.i(LOG_TAG, "Clicked Play");
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.pause();
+                views.setImageViewResource(R.id.status_bar_play,
+                        R.drawable.apollo_holo_dark_play);
+                bigViews.setImageViewResource(R.id.status_bar_play,
+                        R.drawable.apollo_holo_dark_play);
+            } else {
+                mediaPlayer.play();
+                views.setImageViewResource(R.id.status_bar_play,
+                        R.drawable.apollo_holo_dark_pause);
+                bigViews.setImageViewResource(R.id.status_bar_play,
+                        R.drawable.apollo_holo_dark_pause);
+            }
+            mNotificationManager.notify(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, status);
+
         } else if (intent.getAction().equals(Constants.ACTION.NEXT_ACTION)) {
-            Toast.makeText(this, "Clicked Next", Toast.LENGTH_SHORT).show();
-            Log.i(LOG_TAG, "Clicked Next");
+            long position = mediaPlayer.getPosition();
+            if ((position + FORWARD_TIME) <= mediaPlayer.getDuration()) {
+                mediaPlayer.seek(position + FORWARD_TIME);
+            }
+
         } else if (intent.getAction().equals(
                 Constants.ACTION.STOPFOREGROUND_ACTION)) {
-            Log.i(LOG_TAG, "Received Stop Foreground Intent");
-            Toast.makeText(this, "Service Stoped", Toast.LENGTH_SHORT).show();
-            if (mediaPlayer != null)
-                mediaPlayer.pause();
+           // Log.i(LOG_TAG, "Received Stop Foreground Intent");
+            //Toast.makeText(this, "Service Stoped", Toast.LENGTH_SHORT).show();
             stopForeground(true);
             stopSelf();
+            if (mediaPlayer != null) {
+                mediaPlayer.dispose();
+                mediaPlayer = null;
+            }
         }
         return START_STICKY;
     }
 
     private void showNotification() {
 // Using RemoteViews to bind custom layouts into Notification
-        RemoteViews views = new RemoteViews(getPackageName(),
+        views = new RemoteViews(getPackageName(),
                 R.layout.status_bar);
-        RemoteViews bigViews = new RemoteViews(getPackageName(),
+        bigViews = new RemoteViews(getPackageName(),
                 R.layout.status_bar_expanded);
 
 // showing default album image
@@ -72,7 +102,7 @@ public class NotificationService extends Service {
         bigViews.setImageViewBitmap(R.id.status_bar_album_art,
                 Constants.getDefaultAlbumArt(this));
 
-        Intent notificationIntent = new Intent(this, MainActivity.class);
+        Intent notificationIntent = new Intent(this, MusicActivity.class);
         notificationIntent.setAction(Constants.ACTION.MAIN_ACTION);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -112,9 +142,9 @@ public class NotificationService extends Service {
         bigViews.setOnClickPendingIntent(R.id.status_bar_collapse, pcloseIntent);
 
         views.setImageViewResource(R.id.status_bar_play,
-                R.drawable.apollo_holo_dark_pause);
+                R.drawable.apollo_holo_dark_play);
         bigViews.setImageViewResource(R.id.status_bar_play,
-                R.drawable.apollo_holo_dark_pause);
+                R.drawable.apollo_holo_dark_play);
 
         views.setTextViewText(R.id.status_bar_track_name, "Song Title");
         bigViews.setTextViewText(R.id.status_bar_track_name, "Song Title");
@@ -124,6 +154,7 @@ public class NotificationService extends Service {
 
         bigViews.setTextViewText(R.id.status_bar_album_name, "Album Name");
 
+        mNotificationManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         status = new Notification.Builder(this).build();
         status.contentView = views;
         status.bigContentView = bigViews;

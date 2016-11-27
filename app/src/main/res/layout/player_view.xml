@@ -1,14 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/holo_red_dark" >
+    android:background="@android:color/white" >
 
     <VideoView
-        android:id="@+id/video_view"
+        android:id="@+id/svMain"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center">
+        android:layout_gravity="center"
+        android:background="@android:color/transparent" >
     </VideoView>
 
     <TextView
@@ -19,8 +19,15 @@
         android:ellipsize="middle"
         android:textColor="@color/black"
         android:gravity="center"
-        android:shadowColor="@color/white"
-        android:textSize="23dp"
+       android:shadowColor="@color/black_overlay"
+        android:textSize="25dp"
         android:shadowRadius="1" />
+
+    <SeekBar
+        android:id="@+id/seeker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:max="1000" />
 
 </FrameLayout>

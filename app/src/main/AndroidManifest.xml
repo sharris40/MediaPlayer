@@ -49,6 +49,14 @@
                 android:value="edu.uco.map2016.mediaplayer.MainActivity" />
         </activity>
         <activity
+            android:name=".MediaPlayers"
+            android:label="@string/title_activity_player"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="edu.uco.map2016.mediaplayer.MainActivity" />
+        </activity>
+        <activity
             android:name=".MusicActivity"
             android:label="@string/title_activity_player"
             android:parentActivityName=".MainActivity">

@@ -1,5 +1,7 @@
 package edu.uco.map2016.mediaplayer.api;
 
+import android.util.Log;
+
 import java.util.List;
 
 public abstract class AbstractMediaPlayer {
@@ -14,6 +16,7 @@ public abstract class AbstractMediaPlayer {
     protected Playlist playlist = new Playlist("Now Playing");
     protected int playlistIndex = -1;
     private boolean repeat = false;
+    private static final String LOG_TAG = "AbstractMediaPlayer";
 
     /**
      * Loads a song in the background, but does not play it. The song becomes active, and any
@@ -78,6 +81,7 @@ public abstract class AbstractMediaPlayer {
      * @param file
      */
     public void loadFile(MediaFile file) {
+        Log.d(LOG_TAG, "loadFile");
         clearQueue();
         playlist.addMediaFile(file);
         playlistIndex = 0;
