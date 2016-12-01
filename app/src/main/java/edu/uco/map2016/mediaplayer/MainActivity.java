@@ -26,6 +26,8 @@ public class MainActivity extends Activity {
     Button video;
     Button audio;
     EditText searchTextField;
+    private Button playlistButton;
+    private Button createPlaylistButton;
     Button butt1;
 
     Handler mHandler;
@@ -60,6 +62,8 @@ public class MainActivity extends Activity {
 
         searchButton = (Button) findViewById(R.id.layout_main_search_button);
         searchTextField = (EditText) findViewById(R.id.layout_main_search_text_field);
+        playlistButton = (Button) findViewById(R.id.layout_main_playlist_button);
+        createPlaylistButton = (Button) findViewById(R.id.layout_main_create_playlist_button);
         //butt1 = (Button) findViewById(R.id.butt1);
         video = (Button) findViewById(R.id.video) ;
         audio = (Button) findViewById(R.id.music);
@@ -72,6 +76,21 @@ public class MainActivity extends Activity {
                 Intent activityList = new Intent(MainActivity.this, ListActivity.class); //getApplicationContext()
                 activityList.putExtra("SEARCH", searchTextField.getText().toString());
                 startActivity(activityList);
+            }
+        });
+        playlistButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent activitySuperPlaylistList = new Intent(MainActivity.this, SuperPlaylistListActivity.class); //getApplicationContext()
+                startActivity(activitySuperPlaylistList);
+            }
+        });
+        createPlaylistButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent activityCreatePlaylist = new Intent(MainActivity.this, CreatePlaylistActivity.class); //getApplicationContext()
+
+                startActivity(activityCreatePlaylist);
             }
         });
         video.setOnClickListener(new View.OnClickListener() {

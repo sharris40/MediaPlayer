@@ -21,23 +21,39 @@
         android:id="@+id/layout_main_search_text_field"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
+
     <Button android:id="@+id/layout_main_browse_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@id/layout_main_search_button"
         android:text="Browse"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_main_browse_button"
+        android:id="@+id/layout_main_playlist_button"
+        android:text="View Playlists"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_main_playlist_button"
+        android:id="@+id/layout_main_create_playlist_button"
+        android:text="Create Playlist"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/layout_main_create_playlist_button"
+        android:id="@+id/video"
+        android:text="Video"/>
     <Button
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/music"
         android:layout_below="@+id/video"
-        android:text="Music"/>
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layout_main_browse_button"
-        android:id="@id/video"
-        android:text="Video"/>
+        android:text="Music"/>/>
 
 </LinearLayout>
 

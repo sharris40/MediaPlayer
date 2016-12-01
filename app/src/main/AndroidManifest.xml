@@ -76,6 +76,9 @@
         <activity
             android:name=".AddToPlaylistActivity"
             android:label="@string/title_activity_add_to_playlist"/>
+        <activity android:name=".SuperPlaylistListActivity" />
+        <activity android:name=".PlaylistListActivity" />
+        <activity android:name=".CreatePlaylistActivity" />
 
         <service
             android:name=".services.SearchService"

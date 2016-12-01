@@ -29,7 +29,25 @@ public class PlaylistInterface {
     }
 
     public void addPlaylist(Playlist a) {
-        listOfPlaylists.add(a);
+        if (listOfPlaylists.size() > 0) {
+            if (a.getName().compareTo(listOfPlaylists.get(listOfPlaylists.size()-1).getName()) > 0) {
+                listOfPlaylists.add(listOfPlaylists.size(), a);
+            }
+            else {
+                for (int cntr = 0; cntr < listOfPlaylists.size(); cntr++) {
+                    if (a.getName().compareTo(listOfPlaylists.get(cntr).getName()) < 0) {
+                        listOfPlaylists.add(cntr, a);
+                        break;
+                    }
+                }
+            }
+        }
+        else {
+            listOfPlaylists.add(a);
+        }
+
+
+
     }
     public void removePlaylist(int index) {
         listOfPlaylists.remove(index);
@@ -45,7 +63,16 @@ public class PlaylistInterface {
     public void addMediaFile(int playlistIndex, MediaFile a) {
         listOfPlaylists.get(playlistIndex).addMediaFile(a);
     }
-    public void removeMediaFile() {
-
+    public void removeMediaFile(int playlistIndex, int mediaFileIndex) {
+        listOfPlaylists.get(playlistIndex).removeMediaFile(mediaFileIndex);
+    }
+    public void moveUpMediaFile(int playlistIndex, int mediaFileIndex) {
+        listOfPlaylists.get(playlistIndex).moveUpMediaFile(mediaFileIndex);
+    }
+    public void moveDownMediaFile(int playlistIndex, int mediaFileIndex) {
+        listOfPlaylists.get(playlistIndex).moveDownMediaFile(mediaFileIndex);
+    }
+    public void shufflePlaylist(int playlistIndex) {
+        listOfPlaylists.get(playlistIndex).shuffleMediaFiles();
     }
 }

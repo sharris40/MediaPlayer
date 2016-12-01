@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.TimedText;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -549,9 +550,12 @@ public class SubtitleProcessingTask extends AsyncTask<Void, Void, Integer> {
             if (result > -1) {
                 Log.d(LOG_TAG, "Selecting track " + result);
                 player.selectTrack(result);
-                player.setOnTimedTextListener((mediaPlayer, timedText) -> {
-                    subtitleText.setText(timedText.getText());
-                    subtitleText.setVisibility(View.VISIBLE);
+                player.setOnTimedTextListener(new MediaPlayer.OnTimedTextListener() {
+                    @Override
+                    public void onTimedText(MediaPlayer mp, TimedText text) {
+                        subtitleText.setText(text.getText());
+                        subtitleText.setVisibility(View.VISIBLE);
+                    }
                 });
             }
         }
