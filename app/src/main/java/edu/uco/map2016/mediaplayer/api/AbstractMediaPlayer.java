@@ -13,7 +13,7 @@ public abstract class AbstractMediaPlayer {
         void onTrackChange(MediaFile track, int index);
     }
 
-    protected Playlist playlist = new Playlist("Now Playing");
+    protected Playlist mPlaylist = new Playlist("Now Playing");
     protected int playlistIndex = -1;
     private boolean repeat = false;
     private static final String LOG_TAG = "AbstractMediaPlayer";
@@ -83,7 +83,7 @@ public abstract class AbstractMediaPlayer {
     public void loadFile(MediaFile file) {
         Log.d(LOG_TAG, "loadFile");
         clearQueue();
-        playlist.addMediaFile(file);
+        mPlaylist.addMediaFile(file);
         playlistIndex = 0;
         load(file);
     }
@@ -94,7 +94,7 @@ public abstract class AbstractMediaPlayer {
      */
     public void playFile(MediaFile file) {
         clearQueue();
-        playlist.addMediaFile(file);
+        mPlaylist.addMediaFile(file);
         playlistIndex = 0;
         play(file);
     }
@@ -112,10 +112,10 @@ public abstract class AbstractMediaPlayer {
         if (isSongActive())
             playCurrent();
         else if (isSongQueued())
-            play(playlist.getListOfMediaFiles().get(playlistIndex));
-        else if (playlist.getListOfMediaFiles().size() > 0) {
+            play(mPlaylist.getListOfMediaFiles().get(playlistIndex));
+        else if (mPlaylist.getListOfMediaFiles().size() > 0) {
             playlistIndex = 0;
-            play(playlist.getListOfMediaFiles().get(0));
+            play(mPlaylist.getListOfMediaFiles().get(0));
         }
     }
 
@@ -125,9 +125,9 @@ public abstract class AbstractMediaPlayer {
      * @param file
      */
     public void queue(MediaFile file) {
-        playlist.addMediaFile(file);
+        mPlaylist.addMediaFile(file);
         if (!isSongActive()) {
-            playlistIndex = playlist.getListOfMediaFiles().size() - 1;
+            playlistIndex = mPlaylist.getListOfMediaFiles().size() - 1;
             load(file);
         }
     }
@@ -140,7 +140,7 @@ public abstract class AbstractMediaPlayer {
         clearQueue();
         List<MediaFile> files = playlist.getListOfMediaFiles();
         for (MediaFile file : files) {
-            playlist.addMediaFile(file);
+            mPlaylist.addMediaFile(file);
         }
         if (files.size() > 0) {
             playlistIndex = 0;
@@ -156,7 +156,7 @@ public abstract class AbstractMediaPlayer {
     public void queueList(Playlist playlist) {
         List<MediaFile> files = playlist.getListOfMediaFiles();
         for (MediaFile file : files) {
-            playlist.addMediaFile(file);
+            mPlaylist.addMediaFile(file);
         }
         if (!isSongActive() && playlistIndex < 0 && files.size() > 0) {
             playlistIndex = 0;
@@ -170,10 +170,10 @@ public abstract class AbstractMediaPlayer {
      */
     public boolean forward() {
         ++playlistIndex;
-        if (playlistIndex >= playlist.getListOfMediaFiles().size()) {
+        if (playlistIndex >= mPlaylist.getListOfMediaFiles().size()) {
             if (repeat) {
                 playlistIndex = 0;
-                if (playlist.getListOfMediaFiles().size() == 0) {
+                if (mPlaylist.getListOfMediaFiles().size() == 0) {
                     return false;
                 }
             } else {
@@ -181,7 +181,7 @@ public abstract class AbstractMediaPlayer {
                 return false;
             }
         }
-        play(playlist.getListOfMediaFiles().get(playlistIndex));
+        play(mPlaylist.getListOfMediaFiles().get(playlistIndex));
         return true;
     }
 
@@ -194,8 +194,8 @@ public abstract class AbstractMediaPlayer {
         --playlistIndex;
         if (playlistIndex < 0) {
             if (repeat) {
-                playlistIndex = playlist.getListOfMediaFiles().size() - 1;
-                if (playlist.getListOfMediaFiles().size() == 0) {
+                playlistIndex = mPlaylist.getListOfMediaFiles().size() - 1;
+                if (mPlaylist.getListOfMediaFiles().size() == 0) {
                     return false;
                 }
             } else {
@@ -203,7 +203,7 @@ public abstract class AbstractMediaPlayer {
                 return false;
             }
         }
-        play(playlist.getListOfMediaFiles().get(playlistIndex));
+        play(mPlaylist.getListOfMediaFiles().get(playlistIndex));
         return true;
     }
 
@@ -243,8 +243,8 @@ public abstract class AbstractMediaPlayer {
             endPlayback();
         }
         playlistIndex = 0;
-        if (playlist.getListOfMediaFiles().size() > 0) {
-            load(playlist.getListOfMediaFiles().get(0));
+        if (mPlaylist.getListOfMediaFiles().size() > 0) {
+            load(mPlaylist.getListOfMediaFiles().get(0));
         }
     }
 
@@ -256,11 +256,11 @@ public abstract class AbstractMediaPlayer {
             endPlayback();
         }
         playlistIndex = -1;
-        playlist = new Playlist("Now Playing");
+        mPlaylist = new Playlist("Now Playing");
     }
 
     public boolean isSongQueued() {
-        return playlistIndex > -1 && playlistIndex < playlist.getListOfMediaFiles().size();
+        return playlistIndex > -1 && playlistIndex < mPlaylist.getListOfMediaFiles().size();
     }
 
     public boolean isRepeating() {
@@ -295,12 +295,19 @@ public abstract class AbstractMediaPlayer {
      * Call this when the media player finishes loading a song.
      */
     protected void trackChange() {
-        if (mTrackListener != null)
-            mTrackListener.onTrackChange(playlist.getListOfMediaFiles().get(playlistIndex), playlistIndex);
+        if (mTrackListener != null && playlistIndex < mPlaylist.getListOfMediaFiles().size())
+            mTrackListener.onTrackChange(mPlaylist.getListOfMediaFiles().get(playlistIndex), playlistIndex);
     }
 
     /**
      * Disposes the media player. This must be called in order to avoid leaking resources.
      */
     public abstract void dispose();
+
+    public MediaFile getCurrentFile() {
+        if (playlistIndex > -1 && playlistIndex < mPlaylist.getListOfMediaFiles().size()) {
+            return mPlaylist.getListOfMediaFiles().get(playlistIndex);
+        }
+        return null;
+    }
 }

@@ -7,19 +7,19 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 
-public class DeletePlaylistDialogueFragment extends DialogFragment {
+public class AddToPlaylistDialogFragment extends DialogFragment {
 
 
 
     /* The activity that creates an instance of this dialog fragment must
      * implement this interface in order to receive event callbacks.
      * Each method passes the DialogFragment in case the host needs to query it. */
-    public interface PickDeletePlaylistListener {
-        public void onPickDeletePlaylistClick(int colorIndex, DialogFragment dialog);
+    public interface PickAddToPlaylistListener {
+        public void onPickAddToPlaylistClick(int colorIndex, DialogFragment dialog);
     }
 
     // Use this instance of the interface to deliver action events
-    PickDeletePlaylistListener listener;
+    PickAddToPlaylistListener listener;
 
     // Override the Fragment.onAttach() method to instantiate the NoticeDialogListener
     @Override
@@ -28,11 +28,11 @@ public class DeletePlaylistDialogueFragment extends DialogFragment {
         // Verify that the host activity implements the callback interface
         try {
             // Instantiate the NoticeDialogListener so we can send events to the host
-            listener = (PickDeletePlaylistListener) getActivity();
+            listener = (PickAddToPlaylistListener) getActivity();
         } catch (ClassCastException e) {
             // The activity doesn't implement the interface, throw exception
             throw new ClassCastException(getActivity().toString()
-                    + " must implement PickColorListener");
+                    + " must implement PickAddToPlaylistListener");
         }
     }
 
@@ -40,11 +40,11 @@ public class DeletePlaylistDialogueFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Select Option")
-                .setItems(R.array.delete_playlist_array, new DialogInterface.OnClickListener() {
+                .setItems(R.array.add_to_playlist_array, new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int which) {
                         // The 'which' argument contains the index position
                         // of the selected item
-                        listener.onPickDeletePlaylistClick(which, DeletePlaylistDialogueFragment.this);
+                        listener.onPickAddToPlaylistClick(which, AddToPlaylistDialogFragment.this);
                     }
                 });
         return builder.create();

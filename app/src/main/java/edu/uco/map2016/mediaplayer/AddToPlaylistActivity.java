@@ -21,12 +21,11 @@ public class AddToPlaylistActivity extends Activity
 
     public static int contactIndex;
 
-    //private final DetailsViewFragment mQuoteFragment = new DetailsViewFragment();
     private FragmentManager mFragmentManager;
-    private FrameLayout mTitleFrameLayout, mQuotesFrameLayout;
+    private FrameLayout mTitleFrameLayout;
 
     private static final int MATCH_PARENT = LinearLayout.LayoutParams.MATCH_PARENT;
-    private static final String TAG = "QuoteViewerActivity";
+    private static final String TAG = "AddToPlaylistActivity";
 
     public static final int STRING_CAPACITY = 40;
 
@@ -38,17 +37,16 @@ public class AddToPlaylistActivity extends Activity
     private static final int CASE_ADD_TO_PLAYLIST = 1;
     private static final int CASE_CANCEL = 2;
 
-    public static final String RESULT_SHOWN = "result_is_shown";
-    //public static final String RESULT_IS_TRUE = "result_is_true";
+    public static final String RESULT_SHOWN = "result_shown";
 
-    public static String wasAnswerShown(Intent result2) {
+    public static String getResultShown(Intent result2) {
         return result2.getStringExtra(RESULT_SHOWN);
     }
 
-    public void setAnswerShowResult(String result) {
+    public void setResultShown(String result) {
         Intent data = new Intent();
         data.putExtra(RESULT_SHOWN, result);
-        setResult(RESULT_CANCELED, data);
+        setResult(RESULT_OK, data);
     }
 
     @Override
@@ -71,15 +69,9 @@ public class AddToPlaylistActivity extends Activity
             }
         }
 
-        /*
-        for (int cntr = 0; cntr < searchInterface.getListResult().size(); cntr++) {
-            mListArray.add(searchInterface.getListResult().get(cntr).getName());
-        }*/
-
         setContentView(R.layout.activity_add_to_playlist);
 
         mTitleFrameLayout = (FrameLayout) findViewById(R.id.listViewAddToPlaylistLayout);
-        //mQuotesFrameLayout = (FrameLayout) findViewById(R.id.detailsViewMyContactsLayout);
 
         mFragmentManager = getFragmentManager();
         FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
@@ -95,37 +87,13 @@ public class AddToPlaylistActivity extends Activity
     }
 
     private void setLayout() {
-        //if (!mQuoteFragment.isAdded()) {
         mTitleFrameLayout.setLayoutParams(new LinearLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT)); // width, height
-        mQuotesFrameLayout.setLayoutParams(new LinearLayout.LayoutParams(0, MATCH_PARENT));
-
-        /*} else {
-            mTitleFrameLayout.setLayoutParams(new LinearLayout.LayoutParams(0,
-                    MATCH_PARENT, 1f)); // width, height, weight
-            mQuotesFrameLayout.setLayoutParams(new LinearLayout.LayoutParams(0,
-                    MATCH_PARENT, 2f));
-        }*/
     }
 
 
 
     @Override
     public void onListSelection(int index) {
-        //Toast.makeText(getApplicationContext(), Integer.toString(index), Toast.LENGTH_SHORT).show();
-        //if (!mQuoteFragment.isAdded()) {
-        /*    FragmentTransaction fragmentTransaction = mFragmentManager
-                    .beginTransaction();
-            //fragmentTransaction.add(R.id.detailsViewMyContactsLayout, mQuoteFragment);
-            fragmentTransaction.addToBackStack(null);
-            fragmentTransaction.commit();
-            mFragmentManager.executePendingTransactions();
-*/
-        //Toast.makeText(ListActivity.this, "It Worked!", Toast.LENGTH_SHORT).show();
-
-        //}
-        /*if (mQuoteFragment.getShownIndex() != index) {
-            mQuoteFragment.showIndex(index);
-        }*/
         contactIndex = index;
     }
 

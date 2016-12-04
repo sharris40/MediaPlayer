@@ -23,8 +23,6 @@ public class MainActivity extends Activity {
     public static PlaylistInterface playlistInterface;
 
     Button searchButton;
-    Button video;
-    Button audio;
     EditText searchTextField;
     private Button playlistButton;
     private Button createPlaylistButton;
@@ -39,7 +37,15 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         searchInterface = new SearchInterface();
-        playlistInterface = new PlaylistInterface();
+        playlistInterface = PlaylistInterface.readFromFile(this);
+        if (playlistInterface == null) {
+            playlistInterface = new PlaylistInterface();
+        }
+        //playlistInterface = PlaylistInterface.readFromFile(this);
+        //playlistInterface = new PlaylistInterface();
+        //playlistInterface.saveToFile(this);
+
+
 
         Intent serviceIntent = new Intent(this, ProviderManagerService.class);
         startService(serviceIntent);
@@ -65,15 +71,13 @@ public class MainActivity extends Activity {
         playlistButton = (Button) findViewById(R.id.layout_main_playlist_button);
         createPlaylistButton = (Button) findViewById(R.id.layout_main_create_playlist_button);
         //butt1 = (Button) findViewById(R.id.butt1);
-        video = (Button) findViewById(R.id.video) ;
-        audio = (Button) findViewById(R.id.music);
 
         mHandler = new Handler(Looper.getMainLooper());
 
         searchButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent activityList = new Intent(MainActivity.this, ListActivity.class); //getApplicationContext()
+                Intent activityList = new Intent(MainActivity.this, SearchListActivity.class); //getApplicationContext()
                 activityList.putExtra("SEARCH", searchTextField.getText().toString());
                 startActivity(activityList);
             }
@@ -91,22 +95,6 @@ public class MainActivity extends Activity {
                 Intent activityCreatePlaylist = new Intent(MainActivity.this, CreatePlaylistActivity.class); //getApplicationContext()
 
                 startActivity(activityCreatePlaylist);
-            }
-        });
-        video.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent activityList = new Intent(MainActivity.this, VideoActivity.class); //getApplicationContext()
-
-                startActivity(activityList);
-            }
-        });
-        audio.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent activityList = new Intent(MainActivity.this, MusicActivity.class); //getApplicationContext()
-
-                startActivity(activityList);
             }
         });
 

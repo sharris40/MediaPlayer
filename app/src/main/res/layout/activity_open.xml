@@ -50,6 +50,13 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/actOpen_edtUrl"
         android:text="@string/actOpen_btnOpen"/>
+    <Button android:id="@+id/actOpen_btnAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/actOpen_edtUrl"
+        android:layout_toEndOf="@id/actOpen_btnOpen"
+        android:layout_toRightOf="@id/actOpen_btnOpen"
+        android:text="@string/actOpen_btnAdd"/>
 
     <TextView
         android:id="@+id/textView1"

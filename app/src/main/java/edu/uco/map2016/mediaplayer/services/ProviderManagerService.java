@@ -11,10 +11,10 @@ import android.util.Log;
 
 import edu.uco.map2016.mediaplayer.api.AbstractMediaPlayer;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
+import edu.uco.map2016.mediaplayer.services.providers.LocalFilePlayer;
 
 public class ProviderManagerService extends Service {
-    //private static final String PREFERENCES = "provider_manager_preferences";
-    //private SharedPreferences mPreferences;
+    private LocalFilePlayer mPlayer = null;
 
     private static final int UNUSED_REQUEST_CODE = 0x7FFFFFFF;
     private static final String LOG_TAG = "ProviderManagerService";
@@ -33,6 +33,13 @@ public class ProviderManagerService extends Service {
     public void onCreate() {
         super.onCreate();
         //mPreferences = getSharedPreferences(PREFERENCES, MODE_PRIVATE);
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mPlayer != null)
+            mPlayer.dispose();
     }
 
     @Override
@@ -65,7 +72,13 @@ public class ProviderManagerService extends Service {
     }
 
     private void getLocalMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener) {
-
+        if (mPlayer == null) {
+            mPlayer = new LocalFilePlayer(this);
+            mPlayer.setOnPreparedListener(listener);
+            mPlayer.initialize();
+        } else {
+            listener.onPrepared(mPlayer, mPlayer.isPlaying());
+        }
     }
 
     public void getMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener, MediaFile file) {

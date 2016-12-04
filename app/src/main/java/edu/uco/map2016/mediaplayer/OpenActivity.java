@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
@@ -28,6 +29,7 @@ public class OpenActivity extends Activity {
     private static final int REQUEST_BROWSE_AUDIO = 4;
     private static final int REQUEST_BROWSE_VIDEO = 5;
     private static final int REQUEST_STREAM = 6;
+    private static final int REQUEST_PLAYLIST = 16;
     private static final String MIME_AUDIO = "audio/*";
     private static final String MIME_VIDEO = "video/*";
     private static final String MIME_ANY = "*/*";
@@ -76,54 +78,78 @@ public class OpenActivity extends Activity {
             rdoBoth.setChecked(true);
         }
         Button btnBrowse = (Button) findViewById(R.id.actOpen_btnBrowse);
-        btnBrowse.setOnClickListener(v -> {
-            if (Build.VERSION.SDK_INT < 19) {
-                try {
-                    Intent intent;
-                    if (rdoAudio.isChecked()) {
-                        intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
-                        startActivityForResult(intent, REQUEST_BROWSE_LEGACY_AUDIO);
-                    } else {
-                        intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-                        startActivityForResult(intent, REQUEST_BROWSE_LEGACY_VIDEO);
+        btnBrowse.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (Build.VERSION.SDK_INT < 19) {
+                    try {
+                        Intent intent;
+                        if (rdoAudio.isChecked()) {
+                            intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
+                            startActivityForResult(intent, REQUEST_BROWSE_LEGACY_AUDIO);
+                        } else {
+                            intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+                            startActivityForResult(intent, REQUEST_BROWSE_LEGACY_VIDEO);
+                        }
+                    } catch (ActivityNotFoundException ae) {
+                        // TODO: implement custom file browser for API <19
+                        Log.w(LOG_TAG, "TODO: implement custom file browser.");
                     }
-                } catch (ActivityNotFoundException ae) {
-                    // TODO: implement custom file browser for API <19
-                    Log.w(LOG_TAG, "TODO: implement custom file browser.");
-                }
-            } else {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                if (rdoAudio.isChecked()) {
-                    intent.setType(MIME_AUDIO);
-                    startActivityForResult(intent, REQUEST_BROWSE_AUDIO);
-                } else if (rdoVideo.isChecked()) {
-                    intent.setType(MIME_VIDEO);
-                    startActivityForResult(intent, REQUEST_BROWSE_VIDEO);
                 } else {
-                    intent.setType(MIME_ANY);
-                    intent.putExtra(Intent.EXTRA_MIME_TYPES, MIME_TYPES);
-                    startActivityForResult(intent, REQUEST_BROWSE);
+                    Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                    intent.addCategory(Intent.CATEGORY_OPENABLE);
+                    if (rdoAudio.isChecked()) {
+                        intent.setType(MIME_AUDIO);
+                        startActivityForResult(intent, REQUEST_BROWSE_AUDIO);
+                    } else if (rdoVideo.isChecked()) {
+                        intent.setType(MIME_VIDEO);
+                        startActivityForResult(intent, REQUEST_BROWSE_VIDEO);
+                    } else {
+                        intent.setType(MIME_ANY);
+                        intent.putExtra(Intent.EXTRA_MIME_TYPES, MIME_TYPES);
+                        startActivityForResult(intent, REQUEST_BROWSE);
+                    }
                 }
+            }
+        });
+        Button btnAdd = (Button) findViewById(R.id.actOpen_btnAdd);
+        btnAdd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent activityAddToPlayList = new Intent(OpenActivity.this, AddToPlaylistActivity.class); //getApplicationContext()
+                startActivityForResult(activityAddToPlayList, REQUEST_PLAYLIST);
             }
         });
         edtUrl = (EditText) findViewById(R.id.actOpen_edtUrl);
         Button btnOpen = (Button) findViewById(R.id.actOpen_btnOpen);
-        btnOpen.setOnClickListener(v -> {
-            String uriText = edtUrl.getText().toString();
-            if (!uriText.isEmpty()) {
-                try {
-                    URI test = new URI(uriText);
-                } catch (URISyntaxException ue) {
-                    Toast.makeText(OpenActivity.this,
-                            R.string.actOpen_err_invalidUri,
-                            Toast.LENGTH_LONG)
-                            .show();
-                    return;
+        btnOpen.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String uriText = edtUrl.getText().toString();
+                if (!uriText.isEmpty()) {
+                    try {
+                        URI test = new URI(uriText);
+                    } catch (URISyntaxException ue) {
+                        Toast.makeText(OpenActivity.this,
+                                R.string.actOpen_err_invalidUri,
+                                Toast.LENGTH_LONG)
+                                .show();
+                        return;
+                    }
+                    MediaFile media;
+                    Intent playerIntent;
+                    if (rdoAudio.isChecked()) {
+                        media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_AUDIO);
+                        playerIntent = MusicActivity.getInstance(OpenActivity.this, media);
+                    } else if (rdoVideo.isChecked()) {
+                        media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_VIDEO);
+                        playerIntent = VideoActivity.getInstance(OpenActivity.this, media);
+                    } else {
+                        media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_NONE);
+                        playerIntent = VideoActivity.getInstance(OpenActivity.this, media);
+                    }
+                    startActivity(playerIntent);
                 }
-                MediaFile media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_NONE);
-                Intent playerIntent = VideoActivity.getInstance(this, media);
-                startActivity(playerIntent);
             }
         });
 
@@ -133,28 +159,44 @@ public class OpenActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        Intent playerIntent;
         if (intent != null && resultCode == RESULT_OK) {
             MediaFile media = null;
             switch (requestCode) {
                 case REQUEST_BROWSE:
-                    media = new MediaFile("Media File", intent.getData(), MediaFile.TYPE_NONE);
-                    playerIntent = VideoActivity.getInstance(this, media);
-                    break;
                 case REQUEST_BROWSE_AUDIO:
                 case REQUEST_BROWSE_LEGACY_AUDIO:
-                    media = new MediaFile("Media File", intent.getData(), MediaFile.TYPE_AUDIO);
-                    playerIntent = MusicActivity.getInstance(this, media);
-                    break;
                 case REQUEST_BROWSE_VIDEO:
                 case REQUEST_BROWSE_LEGACY_VIDEO:
-                    media = new MediaFile("Media File", intent.getData(), MediaFile.TYPE_VIDEO);
-                    playerIntent = VideoActivity.getInstance(this, media);
+                    edtUrl.setText(intent.getData().toString());
                     break;
-                default:
-                    return;
+                case REQUEST_PLAYLIST:
+                    String uriText = edtUrl.getText().toString();
+                    if (!uriText.isEmpty()) {
+                        try {
+                            URI test = new URI(uriText);
+                        } catch (URISyntaxException ue) {
+                            Toast.makeText(OpenActivity.this,
+                                    R.string.actOpen_err_invalidUri,
+                                    Toast.LENGTH_LONG)
+                                    .show();
+                            return;
+                        }
+                        if (rdoAudio.isChecked())
+                            media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_AUDIO);
+                        else if (rdoVideo.isChecked())
+                            media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_VIDEO);
+                        else
+                            media = new MediaFile("Media File", Uri.parse(uriText), MediaFile.TYPE_NONE);
+                    }
+                    Log.d(LOG_TAG, "adding playlist");
+                    String resultDisplay = AddToPlaylistActivity.getResultShown(intent);
+                    MainActivity.playlistInterface.addMediaFile(Integer.parseInt(resultDisplay), media);
+                    MainActivity.playlistInterface.saveToFile(this);
+                    //labelResult.setText(resultDisplay);
+                    break;
             }
-            startActivity(playerIntent);
+        } else {
+            Log.d(LOG_TAG, Integer.toString(resultCode));
         }
     }
 

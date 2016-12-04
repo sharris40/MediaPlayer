@@ -26,14 +26,19 @@ import java.util.concurrent.TimeUnit;
 
 import edu.uco.map2016.mediaplayer.api.AbstractMediaPlayer;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
+import edu.uco.map2016.mediaplayer.api.Playlist;
 import edu.uco.map2016.mediaplayer.services.ProviderManagerService;
 
 public class MusicActivity extends Activity {
     private static final String LOG_TAG = "TermProject_player";
     private static final String EXTRA_MEDIA
             = "edu.uco.map2016.mediaplayer.MusicActivity.extra_media";
+    private static final String EXTRA_PLAYLIST
+            = "edu.uco.map2016.mediaplayer.MusicActivity.extra_playlist";
     private static final String STATE_MEDIA_FILE
             = "edu.uco.map2016.mediaplayer.MusicActivity.state_media_file";
+    private static final String STATE_PLAYLIST
+            = "edu.uco.map2016.mediaplayer.MusicActivity.state_playlist";
     private static final int REQUEST_PERMISSION_READ_EXTERNAL_STORAGE = 1;
     private static final String STATE_POSITION
             = "edu.uco.map2016.mediaplayer.MusicActivity.state_position";
@@ -44,6 +49,8 @@ public class MusicActivity extends Activity {
     private MediaSession mSession;
     private MediaController mController;
     private MediaFile mFile;
+    private Playlist mPlaylist;
+    private boolean mRunning = false;
 
     private double timeElapsed = 0, finalTime = 0;
     private Handler durationHandler = new Handler();
@@ -57,6 +64,14 @@ public class MusicActivity extends Activity {
 
 
         intent.putExtra(EXTRA_MEDIA, media);
+        return intent;
+    }
+
+    public static Intent getInstance(Context context, Playlist playlist) {
+        Intent intent = new Intent(context, MusicActivity.class);
+
+
+        intent.putExtra(EXTRA_PLAYLIST, playlist);
         return intent;
     }
 
@@ -74,11 +89,14 @@ public class MusicActivity extends Activity {
                         mediaPlayer.setTrackChangeListener(new AbstractMediaPlayer.TrackChangeListener() {
                             @Override
                             public void onTrackChange(MediaFile track, int index) {
+                                songName.setText(track.getName());
+                                mFile = track;
                                 Log.d(LOG_TAG, "onTrackChange");
                                 finalTime = mediaPlayer.getDuration();
                                 Log.d(LOG_TAG, Double.toString(finalTime));
                                 seekbar.setMax((int) finalTime);
-                                durationHandler.postDelayed(updateSeekBarTime, 100);
+                                if (!mRunning)
+                                    durationHandler.postDelayed(updateSeekBarTime, 100);
                             }
                         });
                         player.loadFile(media);
@@ -94,10 +112,41 @@ public class MusicActivity extends Activity {
         bindService(providerIntent, mConnection, 0);
     }
 
-    public void startService(View v) {
-        Intent serviceIntent = new Intent(MusicActivity.this, NotificationService.class);
-        serviceIntent.setAction(Constants.ACTION.STARTFOREGROUND_ACTION);
-        startService(serviceIntent);
+    private void createPlaylist(Playlist playlist) {
+        Intent providerIntent = new Intent(this, ProviderManagerService.class);
+        mConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                ProviderManagerService.ProviderManagerBinder binder = (ProviderManagerService.ProviderManagerBinder) service;
+                binder.getService().getMediaPlayer(MusicActivity.this, new AbstractMediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(AbstractMediaPlayer player, boolean isPlaying) {
+                        mediaPlayer = player;
+
+                        mediaPlayer.setTrackChangeListener(new AbstractMediaPlayer.TrackChangeListener() {
+                            @Override
+                            public void onTrackChange(MediaFile track, int index) {
+                                songName.setText(track.getName());
+                                mFile = track;
+                                Log.d(LOG_TAG, "onTrackChange");
+                                finalTime = mediaPlayer.getDuration();
+                                Log.d(LOG_TAG, Double.toString(finalTime));
+                                seekbar.setMax((int) finalTime);
+                                if (!mRunning)
+                                    durationHandler.postDelayed(updateSeekBarTime, 100);
+                            }
+                        });
+                        player.queueList(playlist);
+                    }
+                }, playlist.getListOfMediaFiles().firstElement());
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+
+            }
+        };
+        bindService(providerIntent, mConnection, 0);
     }
 
     @Override
@@ -130,7 +179,7 @@ public class MusicActivity extends Activity {
         if (intent != null) {
             mFile = intent.getParcelableExtra(EXTRA_MEDIA);
             if (mFile != null) {
-                songName.setText(mFile.getName());
+                mPlaylist = null;
                 if (mFile.isLocal() && Build.VERSION.SDK_INT >= 23
                         && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
                         != PackageManager.PERMISSION_GRANTED) {
@@ -143,15 +192,19 @@ public class MusicActivity extends Activity {
                     if (savedInstanceState != null)
                         oldFile = savedInstanceState.getParcelable(STATE_MEDIA_FILE);
                     if (oldFile != null && mFile.getFileLocationAddress().equals(oldFile.getFileLocationAddress())) {
+                        songName.setText(mFile.getName());
                         finalTime = mediaPlayer.getDuration();
                         if (finalTime < 0) {
                             mediaPlayer.setTrackChangeListener(new AbstractMediaPlayer.TrackChangeListener() {
                                 @Override
                                 public void onTrackChange(MediaFile track, int index) {
                                     Log.d(LOG_TAG, "onTrackChange");
+                                    mFile = track;
+                                    songName.setText(track.getName());
                                     finalTime = mediaPlayer.getDuration();
                                     seekbar.setMax((int) finalTime);
-                                    durationHandler.postDelayed(updateSeekBarTime, 100);
+                                    if (!mRunning)
+                                        durationHandler.postDelayed(updateSeekBarTime, 100);
                                 }
                             });
                             mediaPlayer.loadFile(mFile);
@@ -165,6 +218,53 @@ public class MusicActivity extends Activity {
                         }
                     } else {
                         createMedia(mFile);
+                    }
+                }
+            } else {
+                mPlaylist = intent.getParcelableExtra(EXTRA_PLAYLIST);
+                if (mPlaylist != null && mPlaylist.getListOfMediaFiles().size() > 0) {
+                    mFile = mPlaylist.getListOfMediaFiles().firstElement();
+                    if (mFile != null) {
+                        if (mFile.isLocal() && Build.VERSION.SDK_INT >= 23
+                                && checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                                != PackageManager.PERMISSION_GRANTED) {
+                            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                                    REQUEST_PERMISSION_READ_EXTERNAL_STORAGE);
+                        } else if (mediaPlayer == null) {
+                            createPlaylist(mPlaylist);
+                        } else {
+                            MediaFile oldFile = null;
+                            Playlist oldList = null;
+                            if (savedInstanceState != null)
+                                oldFile = savedInstanceState.getParcelable(STATE_MEDIA_FILE);
+                            if (oldFile != null && mFile.getFileLocationAddress().equals(oldFile.getFileLocationAddress())) {
+                                songName.setText(mFile.getName());
+                                finalTime = mediaPlayer.getDuration();
+                                if (finalTime < 0) {
+                                    mediaPlayer.setTrackChangeListener(new AbstractMediaPlayer.TrackChangeListener() {
+                                        @Override
+                                        public void onTrackChange(MediaFile track, int index) {
+                                            Log.d(LOG_TAG, "onTrackChange");
+                                            mFile = track;
+                                            songName.setText(track.getName());
+                                            finalTime = mediaPlayer.getDuration();
+                                            seekbar.setMax((int) finalTime);
+                                            durationHandler.postDelayed(updateSeekBarTime, 100);
+                                        }
+                                    });
+                                    mediaPlayer.loadFile(mFile);
+                                } else if (mediaPlayer.isPlaying()) {
+                                    seekbar.setMax((int) finalTime);
+                                    durationHandler.postDelayed(updateSeekBarTime, 100);
+                                } else {
+                                    Log.d(LOG_TAG, "song loaded but stopped");
+                                    seekbar.setMax((int) finalTime);
+                                    durationHandler.postDelayed(updateSeekBarTime, 100);
+                                }
+                            } else {
+                                createMedia(mFile);
+                            }
+                        }
                     }
                 }
             }
@@ -198,11 +298,13 @@ public class MusicActivity extends Activity {
     }
 
 
-    private Runnable updateSeekBarTime = new Runnable() {
+    private final Runnable updateSeekBarTime = new Runnable() {
         public void run() {
             if (mediaPlayer == null) {
+                mRunning = false;
                 finish();
             } else {
+                mRunning = true;
                 btnFF.setClickable(true);
                 btnRew.setClickable(true);
                 if (mediaPlayer.isPlaying()) {
@@ -255,6 +357,7 @@ public class MusicActivity extends Activity {
     protected void onSaveInstanceState(Bundle state) {
         super.onSaveInstanceState(state);
         state.putParcelable(STATE_MEDIA_FILE, mFile);
+        state.putParcelable(STATE_PLAYLIST, mPlaylist);
     }
 
 }

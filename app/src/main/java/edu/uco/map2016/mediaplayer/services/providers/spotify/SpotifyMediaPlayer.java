@@ -18,6 +18,7 @@ public class SpotifyMediaPlayer extends AbstractMediaPlayer implements SpotifyPl
     private SpotifyPlayer mPlayer;
     private boolean mUseQueue = false;
     private boolean mSongReady = false;
+    private boolean mReady = false;
 
     SpotifyMediaPlayer() {}
 
@@ -243,6 +244,10 @@ public class SpotifyMediaPlayer extends AbstractMediaPlayer implements SpotifyPl
             case kSpPlaybackNotifyTrackChanged:
                 if (mSongReady) {
                     ++playlistIndex;
+                    if (playlistIndex < mPlaylist.getListOfMediaFiles().size()) {
+                        mSongReady = false;
+                        play(mPlaylist.getListOfMediaFiles().get(playlistIndex));
+                    }
                 } else {
                     mSongReady = true;
                 }
@@ -260,5 +265,15 @@ public class SpotifyMediaPlayer extends AbstractMediaPlayer implements SpotifyPl
     public void clearQueue() {
         super.clearQueue();
         mSongReady = false;
+    }
+
+    @Override
+    protected void ready() {
+        mReady = true;
+        super.ready();
+    }
+
+    public boolean isPrepared() {
+        return mReady;
     }
 }

@@ -42,6 +42,10 @@ import edu.uco.map2016.mediaplayer.utils.TimedTextObject;
 
 public class VideoActivity extends Activity implements
         SurfaceHolder.Callback,OnSeekBarChangeListener {
+
+    private boolean tutorialUsed;
+    private int tutorialPage;
+
     private static final String TAG = "VideoActivity";
     public static final int FADE_OUT = 0;
     public static final int SHOW_PROGRESS = 1;
@@ -113,6 +117,13 @@ public class VideoActivity extends Activity implements
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+        tutorialUsed = false;
+        tutorialPage = 1;
+
+        // your onCreate method/tasks (when you start this application)
+        init();
 
         if( savedInstanceState != null ) {
             position = savedInstanceState.getInt("position");
@@ -228,18 +239,7 @@ public class VideoActivity extends Activity implements
 
 
 
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
 
-        int pos = savedInstanceState.getInt("Position");
-
-        myVideoView.seekTo(pos);
-
-    subtitleProcessesor.run();
-        // Toast.makeText(getApplicationContext(), "QQrefewfeQ", Toast.LENGTH_SHORT).show();
-
-    }
 
 
 
@@ -281,13 +281,13 @@ public class VideoActivity extends Activity implements
                 getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                         WindowManager.LayoutParams.FLAG_FULLSCREEN);
                 getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-               setContentView(R.layout.activity_video);
+                setContentView(R.layout.activity_video);
 
                 myVideoView = (VideoView) findViewById(R.id.video_view);
                 myVideoView.getHolder().addCallback(this);
                 myVideoView.getHolder().setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
                 subtitleText = (TextView) findViewById(R.id.offLine_subtitleText);
-               // mSeeker = (SeekBar) findViewById(R.id.seeker);
+                // mSeeker = (SeekBar) findViewById(R.id.seeker);
                 myVideoView.setMediaController(mediaControls);
                 mHandler = new MessageHandler();
 
@@ -302,7 +302,7 @@ public class VideoActivity extends Activity implements
                 subtitleText.setLayoutParams(rl2);
 
 
-                    return true;
+                return true;
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -310,37 +310,17 @@ public class VideoActivity extends Activity implements
     }
 
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        Log.d(TAG, "onResume called");
-        myVideoView.seekTo(position);
-        myVideoView.start(); //Or use resume() if it doesn't work. I'm not sure
-    }
+
 
     // This gets called before onPause so pause video here.
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        position = myVideoView.getCurrentPosition();
-        myVideoView.pause();
-        outState.putInt("position", position);
-    }
+
 
 
 
     /////////////////////////////////////////////////////////////////new code
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (subtitleDisplayHandler != null) {
-            subtitleDisplayHandler.removeCallbacks(subtitleProcessesor);
-            subtitleDisplayHandler = null;
-            if (subsFetchTask != null)
-                subsFetchTask.cancel(true);
-        }
-    }
+
+
 
 
     @Override
@@ -497,17 +477,17 @@ public class VideoActivity extends Activity implements
     //@Override
 
 
-   // @Override
-   //// public void onStartTrackingTouch(SeekBar seekBar) {
+    // @Override
+    //// public void onStartTrackingTouch(SeekBar seekBar) {
 
-   // }
+    // }
 
-   // @Override
-   // public void onStopTrackingTouch(SeekBar seekBar) {
+    // @Override
+    // public void onStopTrackingTouch(SeekBar seekBar) {
 
-   // }
+    // }
 
-public class SubtitleProcessingTask extends AsyncTask<Void, Void, Integer> {
+    public class SubtitleProcessingTask extends AsyncTask<Void, Void, Integer> {
 
         @Override
         protected void onPreExecute() {
@@ -515,7 +495,7 @@ public class SubtitleProcessingTask extends AsyncTask<Void, Void, Integer> {
             super.onPreExecute();
         }
 
-       // @Override
+        // @Override
         protected Integer doInBackground(Void... params) {
             // int count;
             int track = -1;
@@ -553,8 +533,10 @@ public class SubtitleProcessingTask extends AsyncTask<Void, Void, Integer> {
                 player.setOnTimedTextListener(new MediaPlayer.OnTimedTextListener() {
                     @Override
                     public void onTimedText(MediaPlayer mp, TimedText text) {
-                        subtitleText.setText(text.getText());
-                        subtitleText.setVisibility(View.VISIBLE);
+                        if (subtitleText != null && text != null) {
+                            subtitleText.setText(text.getText());
+                            subtitleText.setVisibility(View.VISIBLE);
+                        }
                     }
                 });
             }
@@ -625,7 +607,7 @@ public class SubtitleProcessingTask extends AsyncTask<Void, Void, Integer> {
         mDragging = true;
     }
 
-   // @Override
+    // @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         mDragging = false;
         setProgress();
@@ -658,5 +640,63 @@ public class SubtitleProcessingTask extends AsyncTask<Void, Void, Integer> {
             }
         }
     }
+
+
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+    }
+
+    /** this will be called when you switch to other app (or leaves it without closing) */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // pauze tasks
+    }
+
+    /** this will be called when you returns back to this app after going into pause state */
+
+    /** this starts when app closes, but BEFORE onDestroy() */
+    // please remember field "savedInstanceState", which will be stored in the memory after this method
+
+
+    /** this starts after onStart(). After this method, onCreate(Bundle b) gets invoked, followed by onPostCreate(Bundle b) method
+     * When this method has ended, the app starts skipping the onCreate and onPostCreate method and initiates then.
+     * -- *%* A best practice is to add an init() method which have all startup functions.
+     */
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        // restore state
+        tutorialPage = savedInstanceState.getInt("TutPage");
+        tutorialUsed = savedInstanceState.getBoolean("tutUsed");
+        init();
+    }
+
+    /** do your startup tasks here */
+    public void init() {
+        if (!tutorialUsed) {
+            //showTutorial(tutorialPage);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "onResume called");
+        myVideoView.seekTo(position);
+        myVideoView.start(); //Or use resume() if it doesn't work. I'm not sure
+    }
+
+    // This gets called before onPause so pause video here.
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        position = myVideoView.getCurrentPosition();
+        myVideoView.pause();
+        outState.putInt("position", position);
+    }
+
 
 }

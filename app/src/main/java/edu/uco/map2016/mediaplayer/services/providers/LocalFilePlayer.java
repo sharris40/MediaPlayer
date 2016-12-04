@@ -21,24 +21,16 @@ public class LocalFilePlayer extends AbstractMediaPlayer {
     @Override
     protected void load(MediaFile file) {
         mPlayer = MediaPlayer.create(mContext, file.getFileLocationAddress());
-        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                trackChange();
-            }
-        });
+        playlistIndex = 0;
+        trackChange();
     }
 
     @Override
     protected void play(MediaFile file) {
         mPlayer = MediaPlayer.create(mContext, file.getFileLocationAddress());
-        mPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(MediaPlayer mp) {
-                trackChange();
-                mPlayer.start();
-            }
-        });
+        playlistIndex = 0;
+        trackChange();
+        mPlayer.start();
     }
 
     @Override

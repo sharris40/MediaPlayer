@@ -41,7 +41,7 @@
         <service android:name=".NotificationService" />
         </activity>
         <activity
-            android:name=".ListActivity"
+            android:name=".SearchListActivity"
             android:label="@string/title_activity_player"
             android:parentActivityName=".MainActivity">
             <meta-data

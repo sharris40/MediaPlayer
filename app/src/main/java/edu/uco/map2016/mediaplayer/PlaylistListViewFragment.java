@@ -22,7 +22,7 @@ public class PlaylistListViewFragment extends ListFragment {
     public void onListItemClick(ListView l, View v, int pos, long id) {
 
         ((PlaylistListActivity)getActivity()).resultIndex = pos;
-        RemoveFromPlaylistDialogueFragment d = new RemoveFromPlaylistDialogueFragment();
+        PlaylistItemDialogFragment d = new PlaylistItemDialogFragment();
         d.show(getFragmentManager(), "colors");
 
         //getListView().setItemChecked(pos, true);
@@ -33,7 +33,7 @@ public class PlaylistListViewFragment extends ListFragment {
         //AddToPlaylistActivity activity = (AddToPlaylistActivity) getActivity();
 
 
-        /*((AddToPlaylistActivity) getActivity()).setAnswerShowResult(Integer.toString(pos));
+        /*((AddToPlaylistActivity) getActivity()).setResultShown(Integer.toString(pos));
         ((AddToPlaylistActivity) getActivity()).finish();*/
 
         /*
@@ -56,7 +56,7 @@ public class PlaylistListViewFragment extends ListFragment {
         }
         */
 
-        //Toast.makeText(getActivity().getApplicationContext(), Integer.toString(ListActivity.mListArray.size()), Toast.LENGTH_SHORT).show();
+        //Toast.makeText(getActivity().getApplicationContext(), Integer.toString(SearchListActivity.mListArray.size()), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -98,7 +98,7 @@ public class PlaylistListViewFragment extends ListFragment {
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="edu.uco.phodgden.p5peterh.ListViewFragment">
+    tools:context="edu.uco.phodgden.p5peterh.SearchListViewFragment">
 
     <!-- TODO: Update blank fragment layout -->
     <TextView

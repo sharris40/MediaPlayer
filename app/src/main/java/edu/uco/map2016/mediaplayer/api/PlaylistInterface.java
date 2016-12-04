@@ -1,11 +1,19 @@
 package edu.uco.map2016.mediaplayer.api;
 
+import android.content.Context;
 import android.net.Uri;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.Vector;
 
-public class PlaylistInterface {
+public class PlaylistInterface implements Serializable {
     private Vector<Playlist> listOfPlaylists = new Vector<Playlist>();
+    public static final String FILE_NAME = "createResumeForm.ser";
     public PlaylistInterface() {
         Playlist demo1 = new Playlist("Demo 1 Playlist");
         demo1.addMediaFile(new MediaFile("This Is How We Do", Uri.parse("http://www.example.com"), Uri.parse("http://www.example.com"), MediaFile.TYPE_AUDIO, "3:24","Katy Perry", "PRISM (Deluxe)", "2013"));
@@ -74,5 +82,35 @@ public class PlaylistInterface {
     }
     public void shufflePlaylist(int playlistIndex) {
         listOfPlaylists.get(playlistIndex).shuffleMediaFiles();
+    }
+
+    // Serializes an object and saves it to a file
+    public void saveToFile(Context context) {
+        try {
+            FileOutputStream fileOutputStream = context.openFileOutput(FILE_NAME, Context.MODE_PRIVATE);
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            objectOutputStream.writeObject(this);
+            objectOutputStream.close();
+            fileOutputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    // Creates an object by reading it from a file
+    public static PlaylistInterface readFromFile(Context context) {
+        PlaylistInterface createResumeForm = null;
+        try {
+            FileInputStream fileInputStream = context.openFileInput(FILE_NAME);
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            createResumeForm = (PlaylistInterface) objectInputStream.readObject();
+            objectInputStream.close();
+            fileInputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        return createResumeForm;
     }
 }

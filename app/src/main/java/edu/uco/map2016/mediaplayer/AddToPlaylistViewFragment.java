@@ -7,8 +7,6 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import edu.uco.map2016.mediaplayer.R;
-
 public class AddToPlaylistViewFragment extends ListFragment {
 
     public TextView mListView;
@@ -22,36 +20,8 @@ public class AddToPlaylistViewFragment extends ListFragment {
 
     @Override
     public void onListItemClick(ListView l, View v, int pos, long id) {
-        //getListView().setItemChecked(pos, true);
-        //mListener.onListSelection(pos);
-
-        //Toast.makeText(getActivity().getApplicationContext(), Integer.toString(pos), Toast.LENGTH_SHORT).show();
-
-        //AddToPlaylistActivity activity = (AddToPlaylistActivity) getActivity();
-        ((AddToPlaylistActivity) getActivity()).setAnswerShowResult(Integer.toString(pos));
+        ((AddToPlaylistActivity) getActivity()).setResultShown(Integer.toString(pos));
         ((AddToPlaylistActivity) getActivity()).finish();
-
-        /*
-        if ((AddToPlaylistActivity.mListArrayIndexForSeatchInterface.get(pos) >= 0) && (AddToPlaylistActivity.mListArrayIndexForSeatchInterface.get(pos) < AddToPlaylistActivity.mListArray.size())) {
-            Toast.makeText(getActivity().getApplicationContext(), pos, Toast.LENGTH_SHORT).show();
-
-        }
-        else {
-            switch (AddToPlaylistActivity.mListArrayIndexForSeatchInterface.get(pos)) {
-                case AddToPlaylistActivity.CASE_NOT_A_MENU_OPTION:
-                    //do nothing
-                    break;
-                case AddToPlaylistActivity.CASE_SEE_ALL_MUSIC:
-                    //open SeeAllMusic Activity
-                    break;
-                case AddToPlaylistActivity.CASE_SEE_ALL_VIDEO:
-                    //open SeeAllVideo Activity
-                    break;
-            }
-        }
-        */
-
-        //Toast.makeText(getActivity().getApplicationContext(), Integer.toString(ListActivity.mListArray.size()), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -59,7 +29,6 @@ public class AddToPlaylistViewFragment extends ListFragment {
         super.onActivityCreated(savedState);
 
         setListAdapter(new ArrayAdapter<String>(getActivity(), R.layout.fragment_add_to_playlist_view, AddToPlaylistActivity.mListArray));
-        //getListView().setChoiceMode(ListView.CHOICE_MODE_SINGLE);
         getListView().setChoiceMode(ListView.CHOICE_MODE_NONE);
 
         try {
@@ -68,39 +37,5 @@ public class AddToPlaylistViewFragment extends ListFragment {
         catch (ClassCastException e) {
             throw new ClassCastException(getActivity().toString() + " must implement OnArticleSelectedListener");
         }
-
-        /*
-        mListView = (TextView) getActivity().findViewById(R.id.listView);
-        mListener.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Toast.makeText(getActivity().getApplicationContext(), "It Worked!", Toast.LENGTH_SHORT).show();
-
-                //Toast.makeText(getActivity().getApplicationContext(), "It Worked!", Toast.LENGTH_SHORT).show();
-                final Intent emailIntent = new Intent(Intent.ACTION_SEND);
-                emailIntent.setType("text/plain");
-                emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{MyContactsActivity.mContactArray[MyContactsActivity.contactIndex].getEmail()});
-                //emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Some Subject");
-                //emailIntent.putExtra(Intent.EXTRA_TEXT, "Some body");
-                startActivity(Intent.createChooser(emailIntent, "Send mail..."));
-            }
-        });*/
     }
 }
-/*
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="edu.uco.phodgden.p5peterh.ListViewFragment">
-
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
-
-</FrameLayout>
-
- */

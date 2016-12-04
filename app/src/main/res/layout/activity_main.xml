@@ -42,18 +42,5 @@
         android:id="@+id/layout_main_create_playlist_button"
         android:text="Create Playlist"/>
 
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/layout_main_create_playlist_button"
-        android:id="@+id/video"
-        android:text="Video"/>
-    <Button
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/music"
-        android:layout_below="@+id/video"
-        android:text="Music"/>/>
-
 </LinearLayout>
 

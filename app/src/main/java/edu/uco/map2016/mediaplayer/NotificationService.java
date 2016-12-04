@@ -8,8 +8,15 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.widget.RemoteViews;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import edu.uco.map2016.mediaplayer.api.MediaFile;
 
 import static edu.uco.map2016.mediaplayer.MusicActivity.mediaPlayer;
 
@@ -20,19 +27,20 @@ public class NotificationService extends Service {
     private final String LOG_TAG = "NotificationService";
     private static final int FORWARD_TIME = 2000;
 
+    private ScheduledExecutorService mExecutor;
+
     private RemoteViews views;
     private RemoteViews bigViews;
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mediaPlayer != null)
-            mediaPlayer.dispose();
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
     @Override
-    public IBinder onBind(Intent intent) {
-        return null;
+    public void onDestroy() {
+        if (mExecutor != null)
+            mExecutor.shutdownNow();
     }
 
     @Override
@@ -82,8 +90,7 @@ public class NotificationService extends Service {
             stopForeground(true);
             stopSelf();
             if (mediaPlayer != null) {
-                mediaPlayer.dispose();
-                mediaPlayer = null;
+                mediaPlayer.pause();
             }
         }
         return START_STICKY;
@@ -145,7 +152,6 @@ public class NotificationService extends Service {
                 R.drawable.apollo_holo_dark_play);
         bigViews.setImageViewResource(R.id.status_bar_play,
                 R.drawable.apollo_holo_dark_play);
-
         views.setTextViewText(R.id.status_bar_track_name, "Song Title");
         bigViews.setTextViewText(R.id.status_bar_track_name, "Song Title");
 
@@ -162,6 +168,42 @@ public class NotificationService extends Service {
         status.icon = R.drawable.ic_launcher;
         status.contentIntent = pendingIntent;
         startForeground(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, status);
+
+        if (mExecutor == null) {
+            mExecutor = Executors.newSingleThreadScheduledExecutor();
+            mExecutor.scheduleWithFixedDelay(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d(LOG_TAG, "update display");
+                    MediaFile file = null;
+                    if (mediaPlayer != null)
+                        file = mediaPlayer.getCurrentFile();
+
+                    if (file != null) {
+                        views.setTextViewText(R.id.status_bar_track_name, file.getName());
+                        bigViews.setTextViewText(R.id.status_bar_track_name, file.getName());
+
+                        views.setTextViewText(R.id.status_bar_artist_name, file.getArtist());
+                        bigViews.setTextViewText(R.id.status_bar_artist_name, file.getArtist());
+
+                        bigViews.setTextViewText(R.id.status_bar_album_name, file.getAlbum());
+                        if (mediaPlayer.isPlaying()) {
+                            views.setImageViewResource(R.id.status_bar_play,
+                                    R.drawable.apollo_holo_dark_pause);
+                            bigViews.setImageViewResource(R.id.status_bar_play,
+                                    R.drawable.apollo_holo_dark_pause);
+                        } else {
+                            views.setImageViewResource(R.id.status_bar_play,
+                                    R.drawable.apollo_holo_dark_play);
+                            bigViews.setImageViewResource(R.id.status_bar_play,
+                                    R.drawable.apollo_holo_dark_play);
+                        }
+                        mNotificationManager.notify(Constants.NOTIFICATION_ID.FOREGROUND_SERVICE, status);
+                    }
+                }
+
+            }, 0, 1000, TimeUnit.MILLISECONDS);
+        }
     }
 
 }

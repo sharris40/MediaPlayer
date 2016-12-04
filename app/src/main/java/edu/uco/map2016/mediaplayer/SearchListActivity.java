@@ -10,39 +10,42 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
-import edu.uco.map2016.mediaplayer.ListViewFragment.ListSelectionListener;
+import edu.uco.map2016.mediaplayer.SearchListViewFragment.ListSelectionListener;
 import edu.uco.map2016.mediaplayer.api.MediaFile;
 import edu.uco.map2016.mediaplayer.api.SearchQuery;
 import edu.uco.map2016.mediaplayer.api.SearchResults;
 import edu.uco.map2016.mediaplayer.services.SearchService;
 
-import static edu.uco.map2016.mediaplayer.MainActivity.searchInterface;
-
-//TODO: Rename this class so it doesn't match Android's ListActivity.
-public class ListActivity extends Activity implements ListSelectionListener, AddToPlaylistDialogueFragment.PickAddToPlaylistListener {
-    private static final String LOG_TAG = "ListActivity";
+public class SearchListActivity extends Activity implements ListSelectionListener, AddToPlaylistDialogFragment.PickAddToPlaylistListener {
+    private static final String LOG_TAG = "SearchListActivity";
+    private static final String FRAGMENT_TAG
+            = "edu.uco.map2016.mediaplayer.SearchListActivity.fragment";
 
     //TextView searchResultView;
 
     //public static String[] mListArray;
-    public static Vector<String> mListArray = new Vector<String>();
-    public static Vector<Integer> mListArrayIndexForSeatchInterface = new Vector<Integer>();
+    public static Vector<SearchListItem> mListArray = new Vector<>();
+    //public static Vector<Integer> mListArrayIndexForSeatchInterface = new Vector<Integer>();
 
     public static int contactIndex;
 
     //private final DetailsViewFragment mQuoteFragment = new DetailsViewFragment();
     private FragmentManager mFragmentManager;
     private FrameLayout mTitleFrameLayout, mQuotesFrameLayout;
-    private ListViewFragment mFragment;
+    private SearchListViewFragment mFragment;
 
     private static class SavedSearchListener implements SearchService.SearchListener {
         private final LinkedList<SearchResults> mResults = new LinkedList<>();
@@ -64,6 +67,97 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
 
         public List<SearchResults> getResults() {
             return mResults;
+        }
+    }
+
+    protected static class SearchListItem implements Parcelable {
+        private static final int IS_FILE = 0;
+        private static final int IS_HEADER = 1;
+
+        private final MediaFile mFile;
+        private final String mHeader;
+
+        public SearchListItem(@NonNull String header) {
+            mHeader = header;
+            mFile = null;
+        }
+
+        public SearchListItem(@NonNull MediaFile file) {
+            mFile = file;
+            mHeader = null;
+        }
+
+        public MediaFile getFile() {
+            return mFile;
+        }
+
+        public String getHeader() {
+            return mHeader;
+        }
+
+        public boolean isHeader() {
+            return mHeader != null;
+        }
+
+        @Override
+        public String toString() {
+            if (isHeader())
+                return mHeader;
+            if (mFile.getName().length() > STRING_CAPACITY) {
+                if (mFile.getDetails().length() > STRING_CAPACITY) {
+                    return mFile.getName().substring(0,STRING_CAPACITY) + "\u2026\n" + mFile.getDetails().substring(0,STRING_CAPACITY) + "\u2026";
+                }
+                else {
+                    return mFile.getName().substring(0,STRING_CAPACITY) + "\u2026\n" + mFile.getDetails();
+                }
+            }
+            else {
+                if (mFile.getDetails().length() > STRING_CAPACITY) {
+                    return mFile.getName() + "\n" + mFile.getDetails().substring(0,STRING_CAPACITY) + "\u2026";
+                }
+                else {
+                    return mFile.getName() + "\n" + mFile.getDetails();
+                }
+            }
+        }
+
+        protected SearchListItem(Parcel in) {
+            int header = in.readInt();
+            if (header == IS_HEADER) {
+                mHeader = in.readString();
+                mFile = null;
+            } else {
+                mFile = in.readParcelable(MediaFile.class.getClassLoader());
+                mHeader = null;
+            }
+        }
+
+        public static final Creator<SearchListItem> CREATOR = new Creator<SearchListItem>() {
+            @Override
+            public SearchListItem createFromParcel(Parcel in) {
+                return new SearchListItem(in);
+            }
+
+            @Override
+            public SearchListItem[] newArray(int size) {
+                return new SearchListItem[size];
+            }
+        };
+
+        @Override
+        public int describeContents() {
+            return 0;
+        }
+
+        @Override
+        public void writeToParcel(Parcel dest, int flags) {
+            if (mHeader != null) {
+                dest.writeInt(IS_HEADER);
+                dest.writeString(mHeader);
+            } else {
+                dest.writeInt(IS_FILE);
+                dest.writeParcelable(mFile, flags);
+            }
         }
     }
 
@@ -128,10 +222,10 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
 
     public static final int STRING_CAPACITY = 40;
 
-    public static final int CASE_NOT_A_MENU_OPTION = -1;
-    public static final int CASE_SEE_ALL_MUSIC = -2;
-    public static final int CASE_SEE_ALL_VIDEO = -3;
-    public static final int CASE_FILE_IN_FRAGMENT = -4;
+    //public static final int CASE_NOT_A_MENU_OPTION = -1;
+    //public static final int CASE_SEE_ALL_MUSIC = -2;
+    //public static final int CASE_SEE_ALL_VIDEO = -3;
+    //public static final int CASE_FILE_IN_FRAGMENT = -4;
 
     private static final int CASE_PLAY_FILE = 0;
     private static final int CASE_ADD_TO_PLAYLIST = 1;
@@ -139,21 +233,21 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
 
     private final int REQUEST_CODE = 0;
 
-    private String resultDisplay;
     public int resultIndex;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode != Activity.RESULT_CANCELED) { return;
+        if (resultCode != Activity.RESULT_OK) { return;
         }
         if (requestCode == REQUEST_CODE) {
             if (data == null) {
                 return;
             }
-            resultDisplay = AddToPlaylistActivity.wasAnswerShown(data);
+            String resultDisplay = AddToPlaylistActivity.getResultShown(data);
             //Toast.makeText(getApplicationContext(), resultDisplay, Toast.LENGTH_SHORT).show();
-            MainActivity.playlistInterface.addMediaFile(Integer.parseInt(resultDisplay), MainActivity.searchInterface.getListResult().get(resultIndex));
-            Toast.makeText(getApplicationContext(), "Added File: " + MainActivity.searchInterface.getListResult().get(resultIndex).getName() + " to Playlist: " + MainActivity.playlistInterface.getListOfPlaylists().get(Integer.parseInt(resultDisplay)).getName(), Toast.LENGTH_SHORT).show();
+            MainActivity.playlistInterface.addMediaFile(Integer.parseInt(resultDisplay), mListArray.get(resultIndex).getFile());
+            MainActivity.playlistInterface.saveToFile(this);
+            Toast.makeText(getApplicationContext(), "Added File: " + mListArray.get(resultIndex).getFile().getName() + " to Playlist: " + MainActivity.playlistInterface.getListOfPlaylists().get(Integer.parseInt(resultDisplay)).getName(), Toast.LENGTH_SHORT).show();
             //labelResult.setText(resultDisplay);
         }
     }
@@ -174,31 +268,16 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
 
         mListArray.removeAllElements();
 
-        mListArray.add("\n");
-        mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
+        mListArray.add(new SearchListItem("\n"));
+        //mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
 
-        mListArray.add("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tMusic\n");
-        mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
+        mListArray.add(new SearchListItem("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tMusic\n"));
+        //mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
 
         for (int cntr = 0, cntr2 = 0; (cntr < MainActivity.searchInterface.getListResult().size()) && cntr2 < 20; cntr++) {
             if (MainActivity.searchInterface.getListResult().get(cntr).getType() == MediaFile.TYPE_AUDIO) {
-                if (MainActivity.searchInterface.getListResult().get(cntr).getName().length() > STRING_CAPACITY) {
-                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
-                    }
-                    else {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails());
-                    }
-                }
-                else {
-                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
-                    }
-                    else {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails());
-                    }
-                }
-                mListArrayIndexForSeatchInterface.add(cntr);
+                mListArray.add(new SearchListItem(MainActivity.searchInterface.getListResult().get(cntr)));
+                //mListArrayIndexForSeatchInterface.add(cntr);
                 cntr2++;
             }
         }
@@ -206,37 +285,22 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
         //mListArray.add("See All Music");
         //mListArrayIndexForSeatchInterface.add(CASE_SEE_ALL_MUSIC);
 
-        mListArray.add("\n");
-        mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
+        mListArray.add(new SearchListItem("\n"));
+        //mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
 
-        mListArray.add("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tVideo\n");
-        mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
+        mListArray.add(new SearchListItem("\t\t\t\t\t\t\t\t\t\t\t\t\t\t\tVideo\n"));
+        //mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
 
         for (int cntr = 0, cntr2 = 0; (cntr < MainActivity.searchInterface.getListResult().size()) && cntr2 < 20; cntr++) {
             if (MainActivity.searchInterface.getListResult().get(cntr).getType() == MediaFile.TYPE_VIDEO) {
-                if (MainActivity.searchInterface.getListResult().get(cntr).getName().length() > STRING_CAPACITY) {
-                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
-                    }
-                    else {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName().substring(0,STRING_CAPACITY) + "..." + "\n" + searchInterface.getListResult().get(cntr).getDetails());
-                    }
-                }
-                else {
-                    if (MainActivity.searchInterface.getListResult().get(cntr).getDetails().length() > STRING_CAPACITY) {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails().substring(0,STRING_CAPACITY) + "...");
-                    }
-                    else {
-                        mListArray.add(MainActivity.searchInterface.getListResult().get(cntr).getName() + "\n" + MainActivity.searchInterface.getListResult().get(cntr).getDetails());
-                    }
-                }
-                mListArrayIndexForSeatchInterface.add(cntr);
+                mListArray.add(new SearchListItem(MainActivity.searchInterface.getListResult().get(cntr)));
+                //mListArrayIndexForSeatchInterface.add(cntr);
                 cntr2++;
             }
         }
 
-        mListArray.add("\n");
-        mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
+        mListArray.add(new SearchListItem("\n"));
+        //mListArrayIndexForSeatchInterface.add(CASE_NOT_A_MENU_OPTION);
 
         /*
         for (int cntr = 0; cntr < searchInterface.getListResult().size(); cntr++) {
@@ -249,24 +313,29 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
         //mQuotesFrameLayout = (FrameLayout) findViewById(R.id.detailsViewMyContactsLayout);
 
         mFragmentManager = getFragmentManager();
-        FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
-        mFragment = new ListViewFragment();
-        fragmentTransaction.add(R.id.listViewMyContactsLayout, mFragment);
-        fragmentTransaction.commit();
 
         Intent searchIntent = new Intent(this, SearchService.class);
         mSearchConnection = new SearchConnection();
         startService(searchIntent);
 
         if (savedInstanceState != null) {
+            ArrayList<SearchListItem> items = savedInstanceState.getParcelableArrayList("LIST");
+            if (items != null) {
+                mListArray = new Vector<>(items);
+            }
             String savedSearch = savedInstanceState.getString("SEARCH");
             mSearchInProgress = (savedSearch != null && savedSearch.equals(mSearchString));
+            mFragment = (SearchListViewFragment)mFragmentManager.findFragmentByTag(FRAGMENT_TAG);
+
+            if (mSearchInProgress) {
+                mRequestCode = savedInstanceState.getInt("REQUEST");
+            }
         } else {
             mSearchInProgress = false;
-        }
-
-        if (mSearchInProgress) {
-            mRequestCode = savedInstanceState.getInt("REQUEST");
+            FragmentTransaction fragmentTransaction = mFragmentManager.beginTransaction();
+            mFragment = new SearchListViewFragment();
+            fragmentTransaction.add(R.id.listViewMyContactsLayout, mFragment, FRAGMENT_TAG);
+            fragmentTransaction.commit();
         }
 
         mQuery = new SearchQuery();
@@ -289,6 +358,7 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
             state.putString("SEARCH", mSearchString);
             state.putInt("REQUEST", mRequestCode);
         }
+        state.putParcelableArrayList("LIST", new ArrayList<>(mListArray));
     }
 
     @Override
@@ -321,7 +391,7 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
             fragmentTransaction.commit();
             mFragmentManager.executePendingTransactions();
 */
-        //Toast.makeText(ListActivity.this, "It Worked!", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(SearchListActivity.this, "It Worked!", Toast.LENGTH_SHORT).show();
 
         //}
         /*if (mQuoteFragment.getShownIndex() != index) {
@@ -330,16 +400,13 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
         Log.d(LOG_TAG, "ListSelection: " + index);
         contactIndex = index;
     }
+
     @Override
     public void onPickAddToPlaylistClick(int optionIndex, DialogFragment dialog) {
         switch(optionIndex) {
             case CASE_PLAY_FILE:
-                MediaFile file;
-                if (resultIndex == CASE_FILE_IN_FRAGMENT) {
-                    file = mFragment.getMediaFile();
-                } else {
-                    file = searchInterface.getListResult().get(resultIndex);
-                }
+                MediaFile file = mListArray.get(resultIndex).getFile();
+
                 Intent playIntent;
                 if (file.getType() == MediaFile.TYPE_AUDIO) {
                     playIntent = MusicActivity.getInstance(this, file);
@@ -349,53 +416,12 @@ public class ListActivity extends Activity implements ListSelectionListener, Add
                 startActivity(playIntent);
                 break;
             case CASE_ADD_TO_PLAYLIST:
-                Intent activityAddToPlayList = new Intent(ListActivity.this, AddToPlaylistActivity.class); //getApplicationContext()
-                //mListArray.removeAllElements();
+                Intent activityAddToPlayList = new Intent(SearchListActivity.this, AddToPlaylistActivity.class); //getApplicationContext()
                 startActivityForResult(activityAddToPlayList, REQUEST_CODE);
                 break;
             case CASE_CANCEL:
 
                 break;
         }
-        /*//String color = getResources().getStringArray(R.array.colors_array)[colorIndex];
-        //textview.setText(color + " has picked!");
-        //Toast.makeText(getApplicationContext(), "It Worked!", Toast.LENGTH_SHORT).show();
-
-        //Uri uri = Uri.parse(urlArray[colorIndex]); // missing 'http://' will cause crashed
-        //Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-        //startActivity(intent);
-
-        // Define the Notification's expanded message and Intent:
-
-        //mContentView.setTextViewText(R.id.text, contentText + " (" + ++mNotificationCount + ")");
-
-        // Build the Notification
-
-        Notification.Builder notificationBuilder = new Notification.Builder(
-                getApplicationContext())
-                //.setTicker(tickerText)
-                .setSmallIcon(android.R.drawable.stat_sys_warning)
-                .setAutoCancel(true)
-                .setContentIntent(mContentIntent);
-
-        //.setSound(soundURI)
-        //.setVibrate(mVibratePattern)
-        //.setContent(mContentView);
-
-        //Intent activityAdd = new Intent(MainActivity.this, DepartmentInfoActivity.class); //getApplicationContext()
-
-        //Toast.makeText(getApplicationContext(), Integer.toString(colorIndex), Toast.LENGTH_SHORT).show();
-
-        //mNotificationIntent.putExtra("INDEX", Integer.toString(colorIndex));
-
-        // Pass the Notification to the NotificationManager:
-        NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(MY_NOTIFICATION_ID,
-                notificationBuilder.build());
-
-        //mNotificationIntent.putExtra("INDEX", Integer.toString(colorIndex));
-
-        index = colorIndex;
-        */
     }
 }

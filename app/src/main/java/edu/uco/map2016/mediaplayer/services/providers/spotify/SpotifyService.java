@@ -62,6 +62,7 @@ public class SpotifyService extends ProviderService {
     private String mToken = null;
     private Date mExpires = null;
     private SparseArray<SpotifySearchResults> mSearchResults = new SparseArray<>();
+    private SpotifyMediaPlayer mPlayer = null;
 
     private ScheduledExecutorService mExecutor = null;
 
@@ -88,6 +89,13 @@ public class SpotifyService extends ProviderService {
                     }, expireDate.getTime() - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
                 }
             }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        if (mPlayer != null) {
+            mPlayer.dispose();
         }
     }
 
@@ -336,10 +344,18 @@ public class SpotifyService extends ProviderService {
     @Override
     public void getMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener) {
         if (mToken != null) {
-            SpotifyMediaPlayer player = new SpotifyMediaPlayer();
-            player.setOnPreparedListener(listener);
-            Config config = new Config(context, mToken, getResources().getString(R.string.spotify_client_id));
-            player.initialize(config);
+            if (mPlayer != null) {
+                if (mPlayer.isPrepared()) {
+                    listener.onPrepared(mPlayer, mPlayer.isPlaying());
+                } else {
+                    mPlayer.setOnPreparedListener(listener);
+                }
+            } else {
+                mPlayer = new SpotifyMediaPlayer();
+                mPlayer.setOnPreparedListener(listener);
+                Config config = new Config(this, mToken, getResources().getString(R.string.spotify_client_id));
+                mPlayer.initialize(config);
+            }
         }
     }
 
