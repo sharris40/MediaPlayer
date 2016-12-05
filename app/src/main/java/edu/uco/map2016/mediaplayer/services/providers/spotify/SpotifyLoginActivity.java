@@ -53,7 +53,7 @@ public class SpotifyLoginActivity extends Activity {
         if (!mRequested) {
             Log.d(LOG_TAG, "running intent check");
             mRequested = true;
-            startActivityForResult(getIntent().getParcelableExtra(EXTRA_CONTAINED_INTENT), REQUEST_CODE);
+            startActivityForResult((Intent)getIntent().getParcelableExtra(EXTRA_CONTAINED_INTENT), REQUEST_CODE);
         }
     }
 
@@ -64,8 +64,8 @@ public class SpotifyLoginActivity extends Activity {
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        Date now = new Date();
+    protected void onActivityResult(int requestCode, final int resultCode, final Intent intent) {
+        final Date now = new Date();
         super.onActivityResult(requestCode, resultCode, intent);
         if (requestCode == REQUEST_CODE) {
             Intent serviceIntent = new Intent(this, SpotifyService.class);

@@ -166,7 +166,7 @@ public class PlayerActivity extends Activity {
         if (requestCode == REQUEST_PERMISSION_READ_EXTERNAL_STORAGE
                 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                play(getIntent().getParcelableExtra(EXTRA_MEDIA));
+                play((MediaFile)getIntent().getParcelableExtra(EXTRA_MEDIA));
         }
     }
 

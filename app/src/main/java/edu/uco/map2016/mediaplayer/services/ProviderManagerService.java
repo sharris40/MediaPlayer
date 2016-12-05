@@ -81,7 +81,7 @@ public class ProviderManagerService extends Service {
         }
     }
 
-    public void getMediaPlayer(Context context, AbstractMediaPlayer.OnPreparedListener listener, MediaFile file) {
+    public void getMediaPlayer(final Context context, final AbstractMediaPlayer.OnPreparedListener listener, MediaFile file) {
         if (file.isLocal()) {
             getLocalMediaPlayer(context, listener);
         } else {

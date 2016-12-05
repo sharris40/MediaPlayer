@@ -99,6 +99,9 @@ public class SearchInterface {
     }
 
     public void search(String searchCriteria) {
+        listToSearch = new Vector<>();
+        listResult = new Vector<>();
+        listRelevance = new Vector<>();
         retrieveListToSearch();
 
         for (int cntr0 = 0; cntr0 < listToSearch.size(); cntr0++) { // For each element in list to search,

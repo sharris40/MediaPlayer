@@ -4,6 +4,7 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.annotation.NonNull;
 
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Vector;
 
@@ -25,8 +26,9 @@ public class Playlist implements Parcelable {
             listOfMediaFiles.add(a);
         } else {
             MediaFile first = listOfMediaFiles.firstElement();
-            if (first.isLocal() && a.isLocal() || first.getProvider() != null
-                                                  && first.getProvider().equals(a.getProvider())) {
+            if (first.isLocal() && a.isLocal()
+                    || first.getProvider() == null && a.getProvider() == null
+                    || first.getProvider() != null && first.getProvider().equals(a.getProvider())) {
                 listOfMediaFiles.add(a);
             }
         }
@@ -49,11 +51,16 @@ public class Playlist implements Parcelable {
         }
     }
     public void shuffleMediaFiles() {
-        Vector<MediaFile> tempListOfMediaFiles = listOfMediaFiles;
+        Vector<MediaFile> tempListOfMediaFiles = new Vector<>(listOfMediaFiles);
+        boolean[] mapping = new boolean[tempListOfMediaFiles.size()];
+        Arrays.fill(mapping, false);
         for (int cntr = 0; cntr < listOfMediaFiles.size(); cntr++) {
-            int temp = (new Random()).nextInt(tempListOfMediaFiles.size());
+            int temp;
+            do {
+                temp = (new Random()).nextInt(mapping.length);
+            } while (mapping[temp]);
+            mapping[temp] = true;
             listOfMediaFiles.set(cntr, tempListOfMediaFiles.get(temp));
-            tempListOfMediaFiles.remove(temp);
         }
     }
 
@@ -62,7 +69,7 @@ public class Playlist implements Parcelable {
         int size = in.readInt();
         listOfMediaFiles.ensureCapacity(size);
         while (size-- > 0) {
-            listOfMediaFiles.add(in.readParcelable(MediaFile.class.getClassLoader()));
+            listOfMediaFiles.add((MediaFile)in.readParcelable(MediaFile.class.getClassLoader()));
         }
     }
 

@@ -8,6 +8,7 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnVideoSizeChangedListener;
+import android.media.TimedText;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -295,9 +296,13 @@ public class MediaPlayers extends Activity implements
             super.onPostExecute(result);
             if (result > -1) {
                 player.selectTrack(result);
-                player.setOnTimedTextListener((mediaPlayer, timedText) -> {
-                    subtitleText.setText(timedText.getText());
-                    subtitleText.setVisibility(View.VISIBLE);
+                player.setOnTimedTextListener(new MediaPlayer.OnTimedTextListener() {
+                    @Override
+                    public void onTimedText(MediaPlayer mp, TimedText text) {
+
+                        subtitleText.setText(text.getText());
+                        subtitleText.setVisibility(View.VISIBLE);
+                    }
                 });
             }
         }

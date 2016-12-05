@@ -169,9 +169,17 @@ public class SearchListActivity extends Activity implements ListSelectionListene
 
     private class SearchConnection implements ServiceConnection {
         SearchService mService = null;
-        private SearchService.SearchListener mListener = (results -> {
-            Log.d(LOG_TAG, "Listener called; results " + ((results == null) ? "null" : "from " + results.getSource()));
-            mHandler.post(() -> mFragment.addResults(results));
+        private SearchService.SearchListener mListener = (new SearchService.SearchListener() {
+            @Override
+            public void onSearchResults(final SearchResults results) {
+                Log.d(LOG_TAG, "Listener called; results " + ((results == null) ? "null" : "from " + results.getSource()));
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        mFragment.addResults(results);
+                    }
+                });
+            }
         });
 
         @Override
@@ -184,8 +192,13 @@ public class SearchListActivity extends Activity implements ListSelectionListene
                     mService.setListener(mRequestCode, mListener);
                     SavedSearchListener savedListener = (SavedSearchListener)listener;
                     for (SearchResults results : savedListener.getResults()) {
-                        mHandler.post(() ->
-                                mFragment.addResults(results));
+                        final SearchResults finalResult = results;
+                        mHandler.post(new Runnable() {
+                            @Override
+                                    public void run() {
+                                mFragment.addResults(finalResult);
+                            }
+                        });
                     }
                 } else {
                     mRequestCode = mService.search(mQuery, mListener);

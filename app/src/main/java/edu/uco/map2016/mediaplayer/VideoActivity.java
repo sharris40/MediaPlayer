@@ -229,7 +229,7 @@ public class VideoActivity extends Activity implements
         if (requestCode == REQUEST_PERMISSION_READ_EXTERNAL_STORAGE
                 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            createMedia(getIntent().getParcelableExtra(EXTRA_MEDIA));
+            createMedia((MediaFile)getIntent().getParcelableExtra(EXTRA_MEDIA));
 
         }
     }

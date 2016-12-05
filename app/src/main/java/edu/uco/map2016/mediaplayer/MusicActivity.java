@@ -75,7 +75,7 @@ public class MusicActivity extends Activity {
         return intent;
     }
 
-    private void createMedia(MediaFile media) {
+    private void createMedia(final MediaFile media) {
         Intent providerIntent = new Intent(this, ProviderManagerService.class);
         mConnection = new ServiceConnection() {
             @Override
@@ -112,7 +112,7 @@ public class MusicActivity extends Activity {
         bindService(providerIntent, mConnection, 0);
     }
 
-    private void createPlaylist(Playlist playlist) {
+    private void createPlaylist(final Playlist playlist) {
         Intent providerIntent = new Intent(this, ProviderManagerService.class);
         mConnection = new ServiceConnection() {
             @Override
@@ -286,7 +286,7 @@ public class MusicActivity extends Activity {
                 && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED
                 && mediaPlayer == null) {
-            createMedia(getIntent().getParcelableExtra(EXTRA_MEDIA));
+            createMedia((MediaFile)getIntent().getParcelableExtra(EXTRA_MEDIA));
         }
     }
 

@@ -99,10 +99,13 @@ public class MainActivity extends Activity {
         });
 
         Button browseButton = (Button)findViewById(R.id.layout_main_browse_button);
-        browseButton.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, OpenActivity.class);
-            startActivity(intent);
-        });
+        browseButton.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View v) {
+                                                Intent intent = new Intent(MainActivity.this, OpenActivity.class);
+                                                startActivity(intent);
+                                            }
+                                        });
 
     }
 

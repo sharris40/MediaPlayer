@@ -22,7 +22,7 @@ public class SpotifyMediaPlayer extends AbstractMediaPlayer implements SpotifyPl
 
     SpotifyMediaPlayer() {}
 
-    void initialize(Config config) {
+    void initialize(final Config config) {
         Spotify.getPlayer(config, this, new SpotifyPlayer.InitializationObserver() {
             @Override
             public void onInitialized(SpotifyPlayer spotifyPlayer) {

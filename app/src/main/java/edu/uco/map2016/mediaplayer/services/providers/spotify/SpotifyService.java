@@ -82,11 +82,15 @@ public class SpotifyService extends ProviderService {
                 mToken = mPreferences.getString(STATE_TOKEN, null);
                 if (mToken != null) {
                     mExpires = expireDate;
-                    mExecutor.schedule(() -> {
-                        mToken = null;
-                        mExpires = null;
-                        sendMessage(MESSAGE_CONNECTION_UPDATE, RESPONSE_DISCONNECTED);
+                    mExecutor.schedule(new Runnable() {
+                        @Override
+                        public void run() {
+                            mToken = null;
+                            mExpires = null;
+                            sendMessage(MESSAGE_CONNECTION_UPDATE, RESPONSE_DISCONNECTED);
+                        }
                     }, expireDate.getTime() - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
+
                 }
             }
         }
@@ -171,23 +175,29 @@ public class SpotifyService extends ProviderService {
     }
 
     @Override
-    public void connect(int requestCode) {
-        mExecutor.execute(() -> {
-            if (mToken == null) {
-                notifyComplete(REQUEST_CONNECT, requestCode, RESPONSE_RUN_ACTIVITY);
-            } else {
-                doCheckConnection(REQUEST_CONNECT);
+    public void connect(final int requestCode) {
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (mToken == null) {
+                    notifyComplete(REQUEST_CONNECT, requestCode, RESPONSE_RUN_ACTIVITY);
+                } else {
+                    doCheckConnection(REQUEST_CONNECT);
+                }
             }
         });
     }
 
     @Override
-    public void checkConnection(int requestCode) {
-        mExecutor.execute(() -> {
-            if (mToken == null) {
-                notifyComplete(REQUEST_CHECK_CONNECTION, requestCode, RESPONSE_DISCONNECTED);
-            } else {
-                doCheckConnection(REQUEST_CHECK_CONNECTION);
+    public void checkConnection(final int requestCode) {
+        mExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                if (mToken == null) {
+                    notifyComplete(REQUEST_CHECK_CONNECTION, requestCode, RESPONSE_DISCONNECTED);
+                } else {
+                    doCheckConnection(REQUEST_CHECK_CONNECTION);
+                }
             }
         });
     }
@@ -271,33 +281,50 @@ public class SpotifyService extends ProviderService {
         }
     }
 
-    void search(int requestCode, String query, boolean isContinuation) {
-        mExecutor.execute(() -> {
-            Resources res = getResources();
-            try {
-                Log.d(LOG_TAG, "started search");
-                URL url = new URL(query);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setReadTimeout(res.getInteger(R.integer.read_timeout));
-                connection.setConnectTimeout(res.getInteger(R.integer.connect_timeout));
-                connection.setRequestMethod("GET");
-                connection.setRequestProperty("Authorization", "Bearer " + mToken);
-                HttpJsonUtility utility = new HttpJsonUtility(this, connection);
-                int code = utility.connect();
-                if (code >= 200 && code < 300) {
-                    Log.d(LOG_TAG, "Complete");
-                    processSearchResults(requestCode, utility.getJson(), isContinuation);
-                    if (!isContinuation) {
-                        notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_OK);
+    void search(final int requestCode, final String query, final boolean isContinuation) {
+        mExecutor.execute(new Runnable() {
+            @Override
+                    public void run() {
+                Resources res = getResources();
+                try {
+                    Log.d(LOG_TAG, "started search");
+                    URL url = new URL(query);
+                    HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                    connection.setReadTimeout(res.getInteger(R.integer.read_timeout));
+                    connection.setConnectTimeout(res.getInteger(R.integer.connect_timeout));
+                    connection.setRequestMethod("GET");
+                    connection.setRequestProperty("Authorization", "Bearer " + mToken);
+                    HttpJsonUtility utility = new HttpJsonUtility(SpotifyService.this, connection);
+                    int code = utility.connect();
+                    if (code >= 200 && code < 300) {
+                        Log.d(LOG_TAG, "Complete");
+                        processSearchResults(requestCode, utility.getJson(), isContinuation);
+                        if (!isContinuation) {
+                            notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_OK);
+                        } else {
+                            SpotifySearchResults results = mSearchResults.get(requestCode);
+                            if (results != null && results.currentListener != null) {
+                                results.currentListener.onSearchUpdated(results.nextQuery != null);
+                                results.currentListener = null;
+                            }
+                        }
                     } else {
-                        SpotifySearchResults results = mSearchResults.get(requestCode);
-                        if (results != null && results.currentListener != null) {
-                            results.currentListener.onSearchUpdated(results.nextQuery != null);
-                            results.currentListener = null;
+                        Log.e(LOG_TAG, "Error connecting to Spotify services.");
+                        if (!isContinuation) {
+                            notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_EXCEPTION);
+                        } else {
+                            SpotifySearchResults results = mSearchResults.get(requestCode);
+                            if (results != null && results.currentListener != null) {
+                                results.currentListener.onSearchFailed();
+                                results.currentListener = null;
+                            }
                         }
                     }
-                } else {
-                    Log.e(LOG_TAG, "Error connecting to Spotify services.");
+                } catch (MalformedURLException mex) {
+                    Log.wtf(LOG_TAG, "Assertion failed: MalformedURLException from hardcoded URL",
+                            mex);
+                } catch (IOException iex) {
+                    Log.e(LOG_TAG, "Error connecting to Spotify services.", iex);
                     if (!isContinuation) {
                         notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_EXCEPTION);
                     } else {
@@ -306,20 +333,6 @@ public class SpotifyService extends ProviderService {
                             results.currentListener.onSearchFailed();
                             results.currentListener = null;
                         }
-                    }
-                }
-            } catch (MalformedURLException mex) {
-                Log.wtf(LOG_TAG, "Assertion failed: MalformedURLException from hardcoded URL",
-                        mex);
-            } catch (IOException iex) {
-                Log.e(LOG_TAG, "Error connecting to Spotify services.", iex);
-                if (!isContinuation) {
-                    notifyComplete(REQUEST_SEARCH, requestCode, RESPONSE_EXCEPTION);
-                } else {
-                    SpotifySearchResults results = mSearchResults.get(requestCode);
-                    if (results != null && results.currentListener != null) {
-                        results.currentListener.onSearchFailed();
-                        results.currentListener = null;
                     }
                 }
             }

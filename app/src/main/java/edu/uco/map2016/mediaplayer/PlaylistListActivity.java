@@ -18,6 +18,7 @@ import edu.uco.map2016.mediaplayer.api.MediaFile;
 import static edu.uco.map2016.mediaplayer.MainActivity.playlistInterface;
 
 public class PlaylistListActivity extends Activity implements ListSelectionListener, PlaylistItemDialogFragment.ManagePlaylistItemListener {
+    private static final String LOG_TAG = "PlaylistListActivity";
 
     public static Vector<String> mListArray = new Vector<String>();
 
@@ -101,7 +102,7 @@ public class PlaylistListActivity extends Activity implements ListSelectionListe
     public void onManagePlaylistItemSelection(int optionIndex, DialogFragment dialog) {
         switch(optionIndex) {
             case CASE_PLAY_FILE:
-                MediaFile file = MainActivity.playlistInterface.getListOfPlaylists().get(Integer.parseInt(playlistToView)).getListOfMediaFiles().get(contactIndex);
+                MediaFile file = MainActivity.playlistInterface.getListOfPlaylists().get(Integer.parseInt(playlistToView)).getListOfMediaFiles().get(resultIndex);
 
                 Intent playIntent;
                 if (file.getType() == MediaFile.TYPE_AUDIO) {
